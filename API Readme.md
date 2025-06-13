@@ -110,6 +110,11 @@ class GameAPIClient {
 
 ## Getting Started Quickly
 
+### Install Dependencies:
+```bash
+npm install playwright @playwright/test dotenv
+```
+
 ### Setup Environment:
 ```bash
 npm install
