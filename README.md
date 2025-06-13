@@ -31,8 +31,8 @@ rtp/
 │   ├── config/
 │   │   └── rtp-config.js
 │   ├── core/
-│   │   ├── rtp-calculator.js
-│   │   └── rtp-statistics.js
+│   │   ├── rtp-calc.js
+│   │   └── rtp-stats.js
 │   └── utils/
 ├── tests/
 │   ├── rtp-validation.spec.js
@@ -208,7 +208,7 @@ While Playwright handles the automated data flow, for quick manual checks during
 
 ```javascript
 // src/rtp/temp-manual-test.js (For quick, isolated testing)
-const RTPCalculator = require('../core/rtp-calculator'); // Assuming this path
+const RTPCalculator = require('../core/rtp-calc'); // Assuming this path
 
 const rtpConfig = {
   targetRTP: 96.0,
@@ -232,7 +232,3 @@ console.log(`Manual RTP Calculation: ${actualRTP.toFixed(2)}%`);
 console.log(`Validation: ${validationResult.isValid ? 'Valid' : 'Invalid'}`);
 console.log(`Deviation: ${validationResult.deviation.toFixed(2)}%`);
 ```
-
-This approach helps you rapidly validate your RTP logic against real or mocked API data, streamlining the development process before full Playwright integration.
-
-````

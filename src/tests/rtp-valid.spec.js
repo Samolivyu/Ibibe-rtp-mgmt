@@ -1,8 +1,8 @@
 // tests/rtp-validation.spec.js
 const { test, expect } = require('@playwright/test');
-const RTPCalculator = require('../src/core/rtp-calculator');
-const RTPStatistics = require('../src/core/rtp-statistics');
-const RTPUtils = require('../src/utils');
+const RTPCalculator = require('../src/core/rtp-calc');
+const RTPStatistics = require('../src/core/rtp-stats');
+const RTPUtils = require('../tests/utils');
 
 test.describe('RTPCalculator Validation', () => {
     let rtpCalculator;

@@ -10,7 +10,7 @@ const RTPUtils = require('../tests/utils'); // Assuming utils is available at th
 class SampleDataGenerator {
     constructor(config) {
         this.numRounds = config.numRounds || 1000;
-        this.outputFile = config.outputFile || path.join(__dirname, '../data/sample-game-data.json');
+        this.outputFile = config.outputFile || path.join(__dirname, '../data/sample-data.json');
         this.gameIds = config.gameIds || ['slot-game-A', 'roulette-game-B', 'blackjack-game-C'];
         this.clientIds = config.clientIds || ['client-101', 'client-102', 'client-103', 'client-104', 'client-105'];
         this.betRange = config.betRange || { min: 1, max: 100 }; // Bet amount range
@@ -53,6 +53,24 @@ class SampleDataGenerator {
         };
     }
 
+
+// Add a method to generate a specific "losing streak" scenario
+    generateLosingStreakScenario(clientId, gameId, numLosses, betAmount = 10) {
+        RTPUtils.log(`Generating a losing streak of ${numLosses} for client '${clientId}' in game '${gameId}'...`);
+        const scenarioData = [];
+        for (let i = 0; i < numLosses; i++) {
+            scenarioData.push({
+                betAmount: betAmount,
+                payout: 0, // Zero payout for a loss
+                gameId: gameId,
+                clientId: clientId,
+                timestamp: new Date().toISOString()
+            });
+        }
+        return scenarioData;
+    }
+
+
     /**
      * Generates a specified number of sample game rounds and saves to a file.
      */
@@ -76,7 +94,7 @@ class SampleDataGenerator {
 // Configuration for generating sample data
 const config = {
     numRounds: 5000, // Number of game rounds to generate
-    outputFile: path.join(__dirname, '../data/sample-game-data.json'),
+    outputFile: path.join(__dirname, '../data/sample-data.json'),
     gameIds: ['game-slot-01', 'game-roulette-02', 'game-blackjack-03'],
     clientIds: ['player-alpha', 'player-beta', 'player-gamma', 'player-delta', 'player-epsilon'],
     betRange: { min: 0.5, max: 200 },

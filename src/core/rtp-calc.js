@@ -1,4 +1,4 @@
-// src/core/rtp-calculator.js
+// src/core/rtp-calc.js
 
 /**
  * RTP Calculator - Core calculation and validation engine

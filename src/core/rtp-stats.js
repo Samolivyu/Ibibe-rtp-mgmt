@@ -1,594 +1,247 @@
-/**
- * RTP Statistics Module
- * Advanced statistical analysis, confidence intervals, and trend analysis
- */
+// src/core/rtp-stats.js (Enhanced)
+const RTPUtils = require('../tests/utils');
+const RTPCalculator = require('./rtp-calc'); // Assuming RTPCalculator is in the same core folder
 
 class RTPStatistics {
-  constructor() {
-    this.analysisResults = new Map();
-  }
+    constructor(config = {}) {
+        this.config = {
+            overallTargetRTP: config.overallTargetRTP || 96.0,
+            overallTolerance: config.overallTolerance || 0.5,
+            criticalToleranceFactor: config.criticalToleranceFactor || 2, // e.g., if deviation is double the tolerance
+            minRoundsForRTPValidation: config.minRoundsForRTPValidation || 100, // Minimum rounds before validating RTP
+            maxLosingStreak: config.maxLosingStreak || 50, // Max consecutive losses to flag
+            gameSpecificRTPs: config.gameSpecificRTPs || {}, // e.g., { 'game-slot-01': 96.5, 'game-roulette-02': 97.3 }
+            ...config // Allow overriding any default config
+        };
 
-  /**
-   * Perform comprehensive statistical analysis on RTP data
-   * @param {Array} gameData - Array of game round data
-   * @param {Object} config - Game configuration
-   * @returns {Object} Statistical analysis results
-   */
-  performStatisticalAnalysis(gameData, config) {
-    if (!gameData || gameData.length === 0) {
-      return this.getEmptyAnalysis();
+        this.rtpCalculator = new RTPCalculator({ // Use RTPCalculator for actual RTP calculations
+            targetRTP: this.config.overallTargetRTP,
+            tolerance: this.config.overallTolerance,
+            minSampleSize: this.config.minRoundsForRTPValidation
+        });
+
+        this.gameRounds = []; // Stores all processed game round data
+        this.rtpHistory = []; // Stores calculated RTP at various intervals
+
+        this.criticalErrors = []; // Stores specific critical RTP deviations or behavioral anomalies
+
+        this.totalBets = 0;
+        this.totalPayouts = 0;
+
+        // Granular tracking
+        this.perGameStats = {}; // { 'gameId': { totalBets, totalPayouts, rounds, currentLosingStreak } }
+        this.perClientStats = {}; // { 'clientId': { totalBets, totalPayouts, rounds, currentLosingStreak } }
     }
 
-    const rtpValues = this.calculateRTPPerRound(gameData);
-    const analysis = {
-      basicStats: this.calculateBasicStatistics(rtpValues),
-      distribution: this.analyzeDistribution(rtpValues),
-      trends: this.analyzeTrends(rtpValues),
-      outliers: this.detectOutliers(rtpValues),
-      confidenceInterval: this.calculateConfidenceInterval(rtpValues, config.confidenceLevel),
-      volatility: this.calculateVolatility(rtpValues),
-      streakAnalysis: this.analyzeStreaks(rtpValues, config.targetRTP)
-    };
-
-    return analysis;
-  }
-
-  /**
-   * Calculate RTP for each individual round
-   * @param {Array} gameData - Game round data
-   * @returns {Array} RTP values per round
-   */
-  calculateRTPPerRound(gameData) {
-    return gameData
-      .filter(round => round.betAmount > 0)
-      .map(round => (round.payout / round.betAmount) * 100);
-  }
-
-  /**
-   * Calculate basic statistical measures
-   * @param {Array} rtpValues - Array of RTP values
-   * @returns {Object} Basic statistics
-   */
-  calculateBasicStatistics(rtpValues) {
-    if (rtpValues.length === 0) return {};
-
-    const sorted = [...rtpValues].sort((a, b) => a - b);
-    const n = rtpValues.length;
-    const sum = rtpValues.reduce((acc, val) => acc + val, 0);
-    const mean = sum / n;
-    
-    const variance = rtpValues.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1);
-    const standardDeviation = Math.sqrt(variance);
-
-    return {
-      count: n,
-      mean: Number(mean.toFixed(4)),
-      median: this.calculateMedian(sorted),
-      mode: this.calculateMode(rtpValues),
-      variance: Number(variance.toFixed(4)),
-      standardDeviation: Number(standardDeviation.toFixed(4)),
-      min: Number(sorted[0].toFixed(4)),
-      max: Number(sorted[n - 1].toFixed(4)),
-      range: Number((sorted[n - 1] - sorted[0]).toFixed(4)),
-      quartiles: this.calculateQuartiles(sorted)
-    };
-  }
-
-  /**
-   * Calculate median value
-   * @param {Array} sortedValues - Sorted array of values
-   * @returns {number} Median value
-   */
-  calculateMedian(sortedValues) {
-    const n = sortedValues.length;
-    if (n % 2 === 0) {
-      return Number(((sortedValues[n / 2 - 1] + sortedValues[n / 2]) / 2).toFixed(4));
-    } else {
-      return Number(sortedValues[Math.floor(n / 2)].toFixed(4));
-    }
-  }
-
-  /**
-   * Calculate mode (most frequent value)
-   * @param {Array} values - Array of values
-   * @returns {number|null} Mode value or null if no mode
-   */
-  calculateMode(values) {
-    const frequency = {};
-    let maxFreq = 0;
-    let mode = null;
-
-    values.forEach(val => {
-      const rounded = Math.round(val * 100) / 100; // Round to 2 decimals for grouping
-      frequency[rounded] = (frequency[rounded] || 0) + 1;
-      if (frequency[rounded] > maxFreq) {
-        maxFreq = frequency[rounded];
-        mode = rounded;
-      }
-    });
-
-    return maxFreq > 1 ? mode : null;
-  }
-
-  /**
-   * Calculate quartiles
-   * @param {Array} sortedValues - Sorted array of values
-   * @returns {Object} Quartile values
-   */
-  calculateQuartiles(sortedValues) {
-    const n = sortedValues.length;
-    const q1Index = Math.floor(n * 0.25);
-    const q3Index = Math.floor(n * 0.75);
-
-    return {
-      q1: Number(sortedValues[q1Index].toFixed(4)),
-      q3: Number(sortedValues[q3Index].toFixed(4)),
-      iqr: Number((sortedValues[q3Index] - sortedValues[q1Index]).toFixed(4))
-    };
-  }
-
-  /**
-   * Analyze RTP distribution
-   * @param {Array} rtpValues - Array of RTP values
-   * @returns {Object} Distribution analysis
-   */
-  analyzeDistribution(rtpValues) {
-    const buckets = this.createHistogramBuckets(rtpValues, 20);
-    const skewness = this.calculateSkewness(rtpValues);
-    const kurtosis = this.calculateKurtosis(rtpValues);
-
-    return {
-      histogram: buckets,
-      skewness: Number(skewness.toFixed(4)),
-      kurtosis: Number(kurtosis.toFixed(4)),
-      normalityTest: this.testNormality(rtpValues)
-    };
-  }
-
-  /**
-   * Create histogram buckets for distribution analysis
-   * @param {Array} values - Array of values
-   * @param {number} bucketCount - Number of buckets
-   * @returns {Array} Histogram buckets
-   */
-  createHistogramBuckets(values, bucketCount = 20) {
-    if (values.length === 0) return [];
-
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const bucketSize = (max - min) / bucketCount;
-    const buckets = Array(bucketCount).fill(0).map((_, i) => ({
-      min: min + (i * bucketSize),
-      max: min + ((i + 1) * bucketSize),
-      count: 0,
-      percentage: 0
-    }));
-
-    values.forEach(value => {
-      const bucketIndex = Math.min(Math.floor((value - min) / bucketSize), bucketCount - 1);
-      buckets[bucketIndex].count++;
-    });
-
-    buckets.forEach(bucket => {
-      bucket.percentage = Number(((bucket.count / values.length) * 100).toFixed(2));
-    });
-
-    return buckets;
-  }
-
-  /**
-   * Calculate skewness
-   * @param {Array} values - Array of values
-   * @returns {number} Skewness value
-   */
-  calculateSkewness(values) {
-    const n = values.length;
-    const mean = values.reduce((acc, val) => acc + val, 0) / n;
-    const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
-    const stdDev = Math.sqrt(variance);
-
-    if (stdDev === 0) return 0;
-
-    const skew = values.reduce((acc, val) => acc + Math.pow((val - mean) / stdDev, 3), 0) / n;
-    return skew;
-  }
-
-  /**
-   * Calculate kurtosis
-   * @param {Array} values - Array of values
-   * @returns {number} Kurtosis value
-   */
-  calculateKurtosis(values) {
-    const n = values.length;
-    const mean = values.reduce((acc, val) => acc + val, 0) / n;
-    const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / n;
-    const stdDev = Math.sqrt(variance);
-
-    if (stdDev === 0) return 0;
-
-    const kurt = values.reduce((acc, val) => acc + Math.pow((val - mean) / stdDev, 4), 0) / n;
-    return kurt - 3; // Excess kurtosis
-  }
-
-  /**
-   * Test for normality (simplified Jarque-Bera test)
-   * @param {Array} values - Array of values
-   * @returns {Object} Normality test results
-   */
-  testNormality(values) {
-    const n = values.length;
-    const skewness = this.calculateSkewness(values);
-    const kurtosis = this.calculateKurtosis(values);
-    
-    const jbStatistic = (n / 6) * (Math.pow(skewness, 2) + Math.pow(kurtosis, 2) / 4);
-    const isNormal = jbStatistic < 5.99; // Critical value for 95% confidence
-
-    return {
-      jarqueBeraStatistic: Number(jbStatistic.toFixed(4)),
-      isNormal: isNormal,
-      pValue: this.approximatePValue(jbStatistic)
-    };
-  }
-
-  /**
-   * Approximate p-value for Jarque-Bera test
-   * @param {number} jbStatistic - Jarque-Bera statistic
-   * @returns {number} Approximate p-value
-   */
-  approximatePValue(jbStatistic) {
-    // Simplified approximation
-    if (jbStatistic < 2) return 0.8;
-    if (jbStatistic < 4) return 0.5;
-    if (jbStatistic < 6) return 0.2;
-    if (jbStatistic < 10) return 0.05;
-    return 0.01;
-  }
-
-  /**
-   * Analyze trends in RTP data
-   * @param {Array} rtpValues - Array of RTP values
-   * @returns {Object} Trend analysis
-   */
-  analyzeTrends(rtpValues) {
-    if (rtpValues.length < 10) {
-      return { trend: 'insufficient_data', slope: 0, correlation: 0 };
-    }
-
-    const indices = Array.from({ length: rtpValues.length }, (_, i) => i);
-    const { slope, correlation } = this.linearRegression(indices, rtpValues);
-    
-    let trend = 'stable';
-    if (Math.abs(slope) > 0.01) {
-      trend = slope > 0 ? 'increasing' : 'decreasing';
-    }
-
-    return {
-      trend: trend,
-      slope: Number(slope.toFixed(6)),
-      correlation: Number(correlation.toFixed(4)),
-      movingAverages: this.calculateMovingAverages(rtpValues)
-    };
-  }
-
-  /**
-   * Perform linear regression
-   * @param {Array} x - X values
-   * @param {Array} y - Y values
-   * @returns {Object} Regression results
-   */
-  linearRegression(x, y) {
-    const n = x.length;
-    const sumX = x.reduce((acc, val) => acc + val, 0);
-    const sumY = y.reduce((acc, val) => acc + val, 0);
-    const sumXY = x.reduce((acc, val, i) => acc + val * y[i], 0);
-    const sumXX = x.reduce((acc, val) => acc + val * val, 0);
-    const sumYY = y.reduce((acc, val) => acc + val * val, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const correlation = (n * sumXY - sumX * sumY) / 
-      Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));
-
-    return { slope, correlation };
-  }
-
-  /**
-   * Calculate moving averages
-   * @param {Array} values - Array of values
-   * @returns {Object} Moving averages
-   */
-  calculateMovingAverages(values) {
-    const windows = [10, 50, 100];
-    const movingAverages = {};
-
-    windows.forEach(window => {
-      if (values.length >= window) {
-        const ma = [];
-        for (let i = window - 1; i < values.length; i++) {
-          const windowValues = values.slice(i - window + 1, i + 1);
-          const average = windowValues.reduce((acc, val) => acc + val, 0) / window;
-          ma.push(Number(average.toFixed(4)));
+    /**
+     * Adds a single game round to the statistics and updates granular stats.
+     * @param {object} gameRound - A game round object with betAmount, payout, gameId, clientId.
+     */
+    addGameRound(gameRound) {
+        if (!gameRound || typeof gameRound.betAmount !== 'number' || typeof gameRound.payout !== 'number' || !gameRound.gameId || !gameRound.clientId) {
+            RTPUtils.log('Invalid or incomplete game round data provided to RTPStatistics.', 'warn');
+            return;
         }
-        movingAverages[`ma${window}`] = ma;
-      }
-    });
 
-    return movingAverages;
-  }
+        this.gameRounds.push(gameRound);
+        this.totalBets += gameRound.betAmount;
+        this.totalPayouts += gameRound.payout;
 
-  /**
-   * Detect outliers using IQR method
-   * @param {Array} values - Array of values
-   * @returns {Object} Outlier analysis
-   */
-  detectOutliers(values) {
-    const sorted = [...values].sort((a, b) => a - b);
-    const q1 = sorted[Math.floor(sorted.length * 0.25)];
-    const q3 = sorted[Math.floor(sorted.length * 0.75)];
-    const iqr = q3 - q1;
-    const lowerBound = q1 - 1.5 * iqr;
-    const upperBound = q3 + 1.5 * iqr;
+        // Update per-game stats
+        if (!this.perGameStats[gameRound.gameId]) {
+            this.perGameStats[gameRound.gameId] = { totalBets: 0, totalPayouts: 0, rounds: 0, currentLosingStreak: 0 };
+        }
+        this.perGameStats[gameRound.gameId].totalBets += gameRound.betAmount;
+        this.perGameStats[gameRound.gameId].totalPayouts += gameRound.payout;
+        this.perGameStats[gameRound.gameId].rounds++;
 
-    const outliers = values.filter(val => val < lowerBound || val > upperBound);
-    
-    return {
-      count: outliers.length,
-      percentage: Number(((outliers.length / values.length) * 100).toFixed(2)),
-      lowerBound: Number(lowerBound.toFixed(4)),
-      upperBound: Number(upperBound.toFixed(4)),
-      outlierValues: outliers.map(val => Number(val.toFixed(4)))
-    };
-  }
+        // Update per-client stats
+        if (!this.perClientStats[gameRound.clientId]) {
+            this.perClientStats[gameRound.clientId] = { totalBets: 0, totalPayouts: 0, rounds: 0, currentLosingStreak: 0 };
+        }
+        this.perClientStats[gameRound.clientId].totalBets += gameRound.betAmount;
+        this.perClientStats[gameRound.clientId].totalPayouts += gameRound.payout;
+        this.perClientStats[gameRound.clientId].rounds++;
 
-  /**
-   * Calculate confidence interval
-   * @param {Array} values - Array of values
-   * @param {number} confidenceLevel - Confidence level (0-1)
-   * @returns {Object} Confidence interval
-   */
-  calculateConfidenceInterval(values, confidenceLevel = 0.95) {
-    if (values.length < 2) return { lower: 0, upper: 0, margin: 0 };
-
-    const mean = values.reduce((acc, val) => acc + val, 0) / values.length;
-    const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (values.length - 1);
-    const standardError = Math.sqrt(variance / values.length);
-    
-    // Approximate critical value for given confidence level
-    const alpha = 1 - confidenceLevel;
-    const criticalValue = this.getCriticalValue(alpha, values.length - 1);
-    const margin = criticalValue * standardError;
-
-    return {
-      lower: Number((mean - margin).toFixed(4)),
-      upper: Number((mean + margin).toFixed(4)),
-      margin: Number(margin.toFixed(4)),
-      confidenceLevel: confidenceLevel
-    };
-  }
-
-  /**
-   * Get critical value for t-distribution (approximation)
-   * @param {number} alpha - Significance level
-   * @param {number} df - Degrees of freedom
-   * @returns {number} Critical value
-   */
-  getCriticalValue(alpha, df) {
-    // Simplified approximation for common confidence levels
-    if (alpha <= 0.01) return 2.576; // 99%
-    if (alpha <= 0.05) return 1.96;  // 95%
-    if (alpha <= 0.1) return 1.645;  // 90%
-    return 1.96; // Default to 95%
-  }
-
-  /**
-   * Calculate volatility measures
-   * @param {Array} values - Array of values
-   * @returns {Object} Volatility analysis
-   */
-  calculateVolatility(values) {
-    if (values.length < 2) return { volatility: 0, annualizedVolatility: 0 };
-
-    const returns = [];
-    for (let i = 1; i < values.length; i++) {
-      if (values[i - 1] !== 0) {
-        returns.push((values[i] - values[i - 1]) / values[i - 1]);
-      }
+        // Track losing streaks for the current round
+        this._trackLosingStreaks(gameRound);
     }
 
-    if (returns.length === 0) return { volatility: 0, annualizedVolatility: 0 };
+    /**
+     * Tracks losing streaks for clients and games.
+     * @param {object} gameRound
+     * @private
+     */
+    _trackLosingStreaks(gameRound) {
+        const isLoss = gameRound.payout < gameRound.betAmount;
 
-    const variance = returns.reduce((acc, ret) => {
-      const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-      return acc + Math.pow(ret - mean, 2);
-    }, 0) / (returns.length - 1);
+        // Update client losing streak
+        if (isLoss) {
+            this.perClientStats[gameRound.clientId].currentLosingStreak++;
+        } else {
+            // If the client won, reset streak and check if previous streak was critical
+            if (this.perClientStats[gameRound.clientId].currentLosingStreak >= this.config.maxLosingStreak) {
+                 this._flagCriticalError(
+                    `Losing Streak Anomaly for Client '${gameRound.clientId}'`,
+                    `Client experienced ${this.perClientStats[gameRound.clientId].currentLosingStreak} consecutive losses, exceeding max allowed (${this.config.maxLosingStreak}).`
+                );
+            }
+            this.perClientStats[gameRound.clientId].currentLosingStreak = 0;
+        }
 
-    const volatility = Math.sqrt(variance);
-    const annualizedVolatility = volatility * Math.sqrt(252); // Assuming 252 trading days
-
-    return {
-      volatility: Number(volatility.toFixed(6)),
-      annualizedVolatility: Number(annualizedVolatility.toFixed(6)),
-      returnsCount: returns.length
-    };
-  }
-
-  /**
-   * Analyze winning and losing streaks
-   * @param {Array} rtpValues - Array of RTP values
-   * @param {number} targetRTP - Target RTP for comparison
-   * @returns {Object} Streak analysis
-   */
-  analyzeStreaks(rtpValues, targetRTP) {
-    if (rtpValues.length === 0) return this.getEmptyStreakAnalysis();
-
-    const streaks = [];
-    let currentStreak = { type: null, length: 0, startIndex: 0 };
-
-    rtpValues.forEach((rtp, index) => {
-      const isWinning = rtp >= targetRTP;
-      const streakType = isWinning ? 'winning' : 'losing';
-
-      if (currentStreak.type === null) {
-        currentStreak = { type: streakType, length: 1, startIndex: index };
-      } else if (currentStreak.type === streakType) {
-        currentStreak.length++;
-      } else {
-        streaks.push({ ...currentStreak });
-        currentStreak = { type: streakType, length: 1, startIndex: index };
-      }
-    });
-
-    if (currentStreak.length > 0) {
-      streaks.push(currentStreak);
+        // Update game losing streak (optional, if you want to track game-wide cold streaks)
+        if (isLoss) {
+            this.perGameStats[gameRound.gameId].currentLosingStreak++;
+        } else {
+            this.perGameStats[gameRound.gameId].currentLosingStreak = 0;
+        }
     }
 
-    const winningStreaks = streaks.filter(s => s.type === 'winning');
-    const losingStreaks = streaks.filter(s => s.type === 'losing');
 
-    return {
-      totalStreaks: streaks.length,
-      winningStreaks: {
-        count: winningStreaks.length,
-        maxLength: winningStreaks.length > 0 ? Math.max(...winningStreaks.map(s => s.length)) : 0,
-        averageLength: winningStreaks.length > 0 ? 
-          Number((winningStreaks.reduce((acc, s) => acc + s.length, 0) / winningStreaks.length).toFixed(2)) : 0
-      },
-      losingStreaks: {
-        count: losingStreaks.length,
-        maxLength: losingStreaks.length > 0 ? Math.max(...losingStreaks.map(s => s.length)) : 0,
-        averageLength: losingStreaks.length > 0 ? 
-          Number((losingStreaks.reduce((acc, s) => acc + s.length, 0) / losingStreaks.length).toFixed(2)) : 0
-      },
-      streakDetails: streaks.slice(-10) // Last 10 streaks for detailed analysis
-    };
-  }
+    /**
+     * Records the current RTP and checks for deviations for overall, per-game, and per-client.
+     * Should be called periodically (e.g., after every X rounds).
+     */
+    snapshotRTP() {
+        if (this.gameRounds.length < this.config.minRoundsForRTPValidation) return;
 
-  /**
-   * Get empty analysis structure
-   * @returns {Object} Empty analysis object
-   */
-  getEmptyAnalysis() {
-    return {
-      basicStats: {},
-      distribution: { histogram: [], skewness: 0, kurtosis: 0, normalityTest: {} },
-      trends: { trend: 'no_data', slope: 0, correlation: 0 },
-      outliers: { count: 0, percentage: 0, outlierValues: [] },
-      confidenceInterval: { lower: 0, upper: 0, margin: 0 },
-      volatility: { volatility: 0, annualizedVolatility: 0 },
-      streakAnalysis: this.getEmptyStreakAnalysis()
-    };
-  }
+        // Overall RTP
+        const overallRTP = this.rtpCalculator.calculateActualRTP(this.gameRounds);
+        const overallValidation = this.rtpCalculator.validateRTP(overallRTP, this.config.overallTargetRTP);
+        this.rtpHistory.push({
+            roundCount: this.gameRounds.length,
+            rtp: overallRTP,
+            deviation: overallValidation.deviation,
+            isWithinTolerance: overallValidation.isValid,
+            timestamp: new Date().toISOString()
+        });
+        if (!overallValidation.isValid && overallValidation.deviation > this.config.overallTolerance * this.config.criticalToleranceFactor) {
+            this._flagCriticalError(
+                'Overall RTP Deviation',
+                `Overall RTP ${overallRTP.toFixed(2)}% vs Target ${this.config.overallTargetRTP.toFixed(2)}% (Deviation: ${overallValidation.deviation.toFixed(2)}%)`
+            );
+        }
 
-  /**
-   * Get empty streak analysis structure
-   * @returns {Object} Empty streak analysis object
-   */
-  getEmptyStreakAnalysis() {
-    return {
-      totalStreaks: 0,
-      winningStreaks: { count: 0, maxLength: 0, averageLength: 0 },
-      losingStreaks: { count: 0, maxLength: 0, averageLength: 0 },
-      streakDetails: []
-    };
-  }
+        // Per-Game RTP
+        for (const gameId in this.perGameStats) {
+            const gameStats = this.perGameStats[gameId];
+            if (gameStats.rounds >= this.config.minRoundsForRTPValidation) {
+                const gameSpecificTargetRTP = this.config.gameSpecificRTPs[gameId] || this.config.overallTargetRTP;
+                const gameDataForRTP = [{ betAmount: gameStats.totalBets, payout: gameStats.totalPayouts }]; // Simulate a single aggregated round
+                const gameRTP = this.rtpCalculator.calculateActualRTP(gameDataForRTP);
+                const gameValidation = this.rtpCalculator.validateRTP(gameRTP, gameSpecificTargetRTP);
 
-  /**
-   * Generate statistical summary report
-   * @param {Array} gameData - Game round data
-   * @param {Object} config - Game configuration
-   * @returns {Object} Summary report
-   */
-  generateSummaryReport(gameData, config) {
-    const analysis = this.performStatisticalAnalysis(gameData, config);
-    const rtpValues = this.calculateRTPPerRound(gameData);
-    
-    return {
-      reportTimestamp: new Date().toISOString(),
-      gameConfig: config,
-      dataOverview: {
-        totalRounds: gameData.length,
-        validRounds: rtpValues.length,
-        dataQuality: Number(((rtpValues.length / gameData.length) * 100).toFixed(2))
-      },
-      keyMetrics: {
-        meanRTP: analysis.basicStats.mean,
-        targetRTP: config.targetRTP,
-        deviation: Math.abs(analysis.basicStats.mean - config.targetRTP),
-        withinTolerance: Math.abs(analysis.basicStats.mean - config.targetRTP) <= config.tolerance,
-        confidenceInterval: analysis.confidenceInterval,
-        volatility: analysis.volatility.volatility
-      },
-      qualityIndicators: {
-        normalDistribution: analysis.distribution.normalityTest.isNormal,
-        outlierPercentage: analysis.outliers.percentage,
-        longestLosingStreak: analysis.streakAnalysis.losingStreaks.maxLength,
-        trendDirection: analysis.trends.trend
-      },
-      recommendations: this.generateRecommendations(analysis, config)
-    };
-  }
+                if (!gameValidation.isValid && gameValidation.deviation > this.config.overallTolerance * this.config.criticalToleranceFactor) {
+                    this._flagCriticalError(
+                        `Game RTP Deviation for '${gameId}'`,
+                        `Actual RTP ${gameRTP.toFixed(2)}% vs Target ${gameSpecificTargetRTP.toFixed(2)}% (Deviation: ${gameValidation.deviation.toFixed(2)}%) after ${gameStats.rounds} rounds.`
+                    );
+                }
+            }
+        }
 
-  /**
-   * Generate recommendations based on analysis
-   * @param {Object} analysis - Statistical analysis results
-   * @param {Object} config - Game configuration
-   * @returns {Array} Array of recommendations
-   */
-  generateRecommendations(analysis, config) {
-    const recommendations = [];
+        // Per-Client RTP
+        for (const clientId in this.perClientStats) {
+            const clientStats = this.perClientStats[clientId];
+            if (clientStats.rounds >= this.config.minRoundsForRTPValidation) {
+                // For client RTP, we don't necessarily have a "target" per client, but we can check for extreme deviation from overall target
+                const clientDataForRTP = [{ betAmount: clientStats.totalBets, payout: clientStats.totalPayouts }];
+                const clientRTP = this.rtpCalculator.calculateActualRTP(clientDataForRTP);
+                const clientDeviation = Math.abs(clientRTP - this.config.overallTargetRTP);
 
-    // RTP deviation recommendations
-    const deviation = Math.abs(analysis.basicStats.mean - config.targetRTP);
-    if (deviation > config.tolerance) {
-      recommendations.push({
-        type: 'critical',
-        category: 'rtp_deviation',
-        message: `RTP deviation of ${deviation.toFixed(4)}% exceeds tolerance of ${config.tolerance}%`,
-        action: 'Investigate game configuration and payout tables'
-      });
+                // Flag if client RTP is excessively far from the overall target (e.g., 3x tolerance)
+                if (clientDeviation > this.config.overallTolerance * 3) { // A stricter threshold for client-specific extreme RTP
+                    this._flagCriticalError(
+                        `Client RTP Anomaly for '${clientId}'`,
+                        `Actual RTP ${clientRTP.toFixed(2)}% vs Overall Target ${this.config.overallTargetRTP.toFixed(2)}% (Deviation: ${clientDeviation.toFixed(2)}%) after ${clientStats.rounds} rounds.`
+                    );
+                }
+            }
+        }
     }
 
-    // Volatility recommendations
-    if (analysis.volatility.volatility > 0.5) {
-      recommendations.push({
-        type: 'warning',
-        category: 'high_volatility',
-        message: `High volatility detected (${analysis.volatility.volatility.toFixed(4)})`,
-        action: 'Monitor for potential payout irregularities'
-      });
+    /**
+     * Helper to add a critical error.
+     * @param {string} type - Type of error (e.g., 'RTP Deviation', 'Losing Streak').
+     * @param {string} message - Detailed error message.
+     * @private
+     */
+    _flagCriticalError(type, message) {
+        this.criticalErrors.push({
+            type: type,
+            roundCount: this.gameRounds.length,
+            message: message,
+            timestamp: new Date().toISOString()
+        });
+        RTPUtils.log(`${type}: ${message}`, 'error');
     }
 
-    // Outlier recommendations
-    if (analysis.outliers.percentage > 10) {
-      recommendations.push({
-        type: 'warning',
-        category: 'outliers',
-        message: `${analysis.outliers.percentage}% of rounds are statistical outliers`,
-        action: 'Review outlier rounds for potential issues'
-      });
+    /**
+     * Generates a summary report of the RTP statistics.
+     * @returns {object} A summary object.
+     */
+    generateReport() {
+        const finalOverallRTP = this.getCurrentCumulativeRTP();
+        const finalOverallDeviation = Math.abs(finalOverallRTP - this.config.overallTargetRTP);
+        const isFinalOverallRTPValid = finalOverallDeviation <= this.config.overallTolerance;
+
+        // Summarize granular stats
+        const perGameSummary = {};
+        for (const gameId in this.perGameStats) {
+            const stats = this.perGameStats[gameId];
+            const gameRTP = (stats.totalBets > 0) ? (stats.totalPayouts / stats.totalBets) * 100 : 0;
+            perGameSummary[gameId] = {
+                rounds: stats.rounds,
+                actualRTP: gameRTP.toFixed(2) + '%',
+                targetRTP: (this.config.gameSpecificRTPs[gameId] || this.config.overallTargetRTP).toFixed(2) + '%',
+                losingStreak: stats.currentLosingStreak // Current streak when report generated
+            };
+        }
+
+        const perClientSummary = {};
+        for (const clientId in this.perClientStats) {
+            const stats = this.perClientStats[clientId];
+            const clientRTP = (stats.totalBets > 0) ? (stats.totalPayouts / stats.totalBets) * 100 : 0;
+            perClientSummary[clientId] = {
+                rounds: stats.rounds,
+                actualRTP: clientRTP.toFixed(2) + '%',
+                losingStreak: stats.currentLosingStreak // Current streak when report generated
+            };
+        }
+
+        return {
+            totalRoundsSimulated: this.gameRounds.length,
+            overallTargetRTP: this.config.overallTargetRTP,
+            overallTolerance: this.config.overallTolerance,
+            finalOverallActualRTP: finalOverallRTP,
+            finalOverallDeviation: finalOverallDeviation,
+            isFinalOverallRTPValid: isFinalOverallRTPValid,
+            criticalErrorCount: this.criticalErrors.length,
+            criticalErrorsDetails: this.criticalErrors,
+            rtpHistorySnapshots: this.rtpHistory, // Provides historical RTP trends
+            perGameSummary: perGameSummary,
+            perClientSummary: perClientSummary,
+            // Add other relevant metrics like standard deviation of payouts if desired
+        };
     }
 
-    // Streak recommendations
-    if (analysis.streakAnalysis.losingStreaks.maxLength > 100) {
-      recommendations.push({
-        type: 'warning',
-        category: 'long_streaks',
-        message: `Maximum losing streak of ${analysis.streakAnalysis.losingStreaks.maxLength} detected`,
-        action: 'Verify game fairness and random number generation'
-      });
+    // Existing methods: getCurrentCumulativeRTP, reset (as before)
+    getCurrentCumulativeRTP() {
+        if (this.totalBets === 0) {
+            return 0;
+        }
+        return (this.totalPayouts / this.totalBets) * 100;
     }
 
-    // Trend recommendations
-    if (analysis.trends.trend !== 'stable' && Math.abs(analysis.trends.correlation) > 0.3) {
-      recommendations.push({
-        type: 'info',
-        category: 'trends',
-        message: `${analysis.trends.trend} trend detected with correlation ${analysis.trends.correlation}`,
-        action: 'Monitor trend continuation and investigate if persistent'
-      });
+    reset() {
+        this.gameRounds = [];
+        this.rtpHistory = [];
+        this.criticalErrors = [];
+        this.totalBets = 0;
+        this.totalPayouts = 0;
+        this.perGameStats = {};
+        this.perClientStats = {};
     }
-
-    return recommendations;
-  }
 }
 
 module.exports = RTPStatistics;
