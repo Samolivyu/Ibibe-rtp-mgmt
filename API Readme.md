@@ -8,9 +8,11 @@ Build and maintain the API testing, simulation, and integration layer for gaming
 **Note:** This component provides the critical data required by the RTP component to validate game fairness and compliance.
 
 ## Tech Stack
-- Node.js
-- JavaScript (ES6)
-- Playwright
+- Node.js  
+- JavaScript (ES6)  
+- Playwright  
+- Postman (for rapid API validation and collaborative testing)
+
 
 ## Your Role & Responsibilities
 As the API specialist, you're responsible for the communication backbone that connects all system components. Your work focuses on:
@@ -22,6 +24,9 @@ As the API specialist, you're responsible for the communication backbone that co
 
 ## Component Interaction
 The API Component receives and processes game transactions, forwarding game round data to the RTP Component. The RTP Component relies on this data to evaluate payout fairness and compliance thresholds.
+
+Postman collections serve as the first-line manual validation layer during API development.
+
 
 ## Shared Data Model
 ```json
@@ -47,6 +52,7 @@ The API Component receives and processes game transactions, forwarding game roun
 3. **Error Handling:** Comprehensive error detection and reporting.
 4. **Monitoring System:** API performance and health tracking.
 
+
 ### Phase 3: Integration & Scaling (Week 5-6)
 1. **RTP Integration:** Connect with RTP component for data exchange.
 2. **Reporting Integration:** API metrics and performance reports.
@@ -67,6 +73,22 @@ The API Component receives and processes game transactions, forwarding game roun
 - **Integration Guide:** Setup and configuration instructions.
 - **Test Coverage Report:** API test results and metrics.
 - **Performance Benchmarks:** Load testing results and analysis.
+- **Use Postman for Early Testing:** 
+   - Import Postman collections for:
+     - Authentication
+     - Game session
+     - Bet placement
+     - RTP validation endpoint
+   - Use `newman` (Postman CLI) to integrate with CI/CD or export to Playwright later.
+
+## Postman + Playwright Hybrid Workflow
+
+| Tool       | Purpose                                 |
+|------------|------------------------------------------|
+| Postman    | Manual endpoint testing + documentation  |
+| Newman     | CLI automation of Postman Collections    |
+| Playwright | Full automation + CI/CD integration      |
+
 
 ## Coding Logic & Architecture
 
@@ -141,5 +163,10 @@ npm run load-test:stress
 ```
 
 ## Joint Testing
-To run end-to-end tests involving both components, ensure both the API and RTP modules are running. Integration test scripts are located in `tests/integration/`.
+-To run end-to-end tests involving both components, ensure both the API and RTP modules are running. Integration test scripts are located in `tests/integration/`.
+- Use Postman to validate API logic early.
+- Feed validated response data into RTP manually or via bridge scripts.
+- Convert stable Postman workflows into Playwright tests.
+
+
 ```

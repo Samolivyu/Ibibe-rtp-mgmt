@@ -10,9 +10,11 @@ Build and maintain the Return to Player (RTP) calculation and validation system 
 **Note:** This component directly relies on data provided by the API layer maintained by the API specialist.
 
 ## Tech Stack
-- Node.js
-- JavaScript (ES6)
-- Playwright
+- Node.js  
+- JavaScript (ES6)  
+- Playwright  
+- Postman – for development-time testing of endpoints, supplying RTP data
+
 
 ## Your Role & Responsibilities
 As the RTP specialist, you're responsible for the mathematical engine that ensures fair play and regulatory compliance. Your work focuses on:
@@ -24,6 +26,9 @@ As the RTP specialist, you're responsible for the mathematical engine that ensur
 
 ## Component Interaction
 The API Component receives game requests and forwards round data (bets & payouts) to the RTP Component. The RTP Component validates RTP using this data and sends alerts if thresholds are breached.
+
+ 📌 If API endpoints used by the RTP module are in development, Postman can mock, test, and validate them before full automation with Playwright is implemented.
+
 
 ## Shared Data Model
 ```json
@@ -130,3 +135,8 @@ npm run generate-sample-data
 ```bash
 npm run start-rtp-monitor
 ```
+
+# Postman Config  
+3. Optional: Use Postman Collections
+   - Import RTP-related mock requests and RTP data verification workflows from Postman.
+   - Collections can be exported from the API Component and manually executed or used with the Postman CLI (Newman) for mock data testing.
