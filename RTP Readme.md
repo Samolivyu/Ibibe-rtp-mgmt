@@ -11,7 +11,6 @@ Build and maintain the Return to Player (RTP) calculation and validation system 
 - Playwright 
 - Postman – for development-time testing of endpoints, supplying RTP data.
 
-
 ## Your Role & Responsibilities
 As the RTP specialist, you're responsible for the mathematical engine that ensures fair play and regulatory compliance. Your work focuses on:
 - **RTP Calculation Engine:** Core algorithms for computing theoretical and actual RTP values.
@@ -25,6 +24,26 @@ The API Component receives game requests and forwards round data (bets & payouts
 
 📌 If API endpoints used by the RTP module are in development, Postman can mock, test, and validate them before full automation with Playwright is implemented.
 
+## Project structure - RTP
+```
+rtp/
+├── src/
+│   ├── config/
+│   │   └── rtp-config.js
+│   ├── core/
+│   │   ├── rtp-calculator.js
+│   │   └── rtp-statistics.js
+│   └── utils/
+├── tests/
+│   ├── rtp-validation.spec.js
+│   └── rtp-performance.spec.js
+├── scripts/
+│   └── generate-sample-data.js
+├── .env
+├── package.json
+└── README.md
+
+```
 
 ## Shared Data Model
 ```json
