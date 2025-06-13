@@ -99,6 +99,11 @@ class RTPCalculator {
 
 ## Getting Started Quickly
 
+### Install Dependencies:
+```bash
+npm install playwright @playwright/test dotenv
+```
+
 ### Setup Environment:
 ```bash
 npm install
@@ -109,6 +114,11 @@ npm run setup-rtp
 ```bash
 npm run test:rtp
 npm run test:rtp-performance
+```
+
+### Run Setup Script:
+```bash
+npm run setup-rtp
 ```
 
 ### Generate Sample Data:
