@@ -1,7 +1,30 @@
 {
+  "name": "api-component",
+  "version": "1.0.0",
+  "description": "API testing, simulation, and integration layer for gaming applications.",
+  "main": "index.js",
+  "scripts": {
+    "test:api": "npx playwright test tests/api-integration.spec.js",
+    "test:load": "npx playwright test tests/api-load.spec.js",
+    "test:websocket": "npx playwright test tests/websocket.spec.js",
+    "test": "npm run test:api && npm run test:load && npm run test:websocket",
+    "dev:api": "echo 'Start your API server here, e.g., node src/server.js' && sleep 1",
+    "setup:api": "echo 'API setup might involve database seeding or mock server setup'",
+    "report:api": "npx playwright show-report playwright-report",
+    "run-load-test": "node scripts/index.js run-load-test",
+    "postinstall": "mkdir -p reports data"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@playwright/test": "^1.53.0",
-    "dotenv": "^16.5.0",
-    "playwright": "^1.53.0"
+    "@playwright/test": "^1.44.1",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0",
+    "ajv": "^8.16.0"
+  },
+  "devDependencies": {
+    "ws": "^8.16.0"
   }
 }
