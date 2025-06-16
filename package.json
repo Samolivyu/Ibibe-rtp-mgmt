@@ -1,7 +1,26 @@
 {
+  "name": "rtp-component",
+  "version": "1.0.0",
+  "description": "RTP calculation and validation system for gaming applications.",
+  "main": "index.js",
+  "scripts": {
+    "test:rtp": "npx playwright test tests/rtp-validation.spec.js",
+    "test:rtp-performance": "npx playwright test tests/rtp-performance.spec.js",
+    "test": "npm run test:rtp && npm run test:rtp-performance",
+    "generate:sample-data": "node scripts/index.js generate-sample-data",
+    "setup:rtp": "echo 'RTP setup complete (no complex setup for now)'",
+    "start-rtp-monitor": "echo 'RTP monitor not yet implemented.'",
+    "report:rtp": "npx playwright show-report playwright-report",
+    "postinstall": "mkdir -p data"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@playwright/test": "^1.53.0",
-    "dotenv": "^16.5.0",
-    "playwright": "^1.53.0"
+    "chalk": "^4.1.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.1"
   }
 }
