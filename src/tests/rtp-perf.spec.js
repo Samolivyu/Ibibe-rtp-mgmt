@@ -1,4 +1,5 @@
-// tests/rtp-performance.spec.js
+// Here is where the api importation and instancing happens. 
+
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
