@@ -345,4 +345,3 @@ npm run test:production
   - **Reporting**: Combined reports generated within 30 seconds.
   - **Scaling**: System ready for 20 games × 100 clients expansion.
 
-```
