@@ -1,0 +1,16 @@
+# .github/workflows/swagger-ci.yml
+name: Swagger Validation
+on: [push]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Swagger
+        run: |
+          npm install -g swagger-cli
+          swagger-cli validate swagger/game-api.yaml
+      - name: Import to Postman
+        run: npm run import:swagger
+      - name: Run Tests
+        run: npm run test:swagger

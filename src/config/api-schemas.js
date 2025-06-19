@@ -60,7 +60,6 @@ const startGameSessionResponseSchema = {
     additionalProperties: false,
 };
 
-
 // Schema for place bet request payload
 const placeBetRequestSchema = {
     $id: 'placeBetRequestSchema',
@@ -123,8 +122,126 @@ const errorResponseSchema = {
     additionalProperties: true,
 };
 
+// RTP Validation Schemas
+const rtpSimulationRequestSchema = {
+    $id: 'rtpSimulationRequestSchema',
+    $schema: JSON_SCHEMA_DRAFT,
+    type: 'object',
+    properties: {
+        gameId: { type: 'string' },
+        spinCount: { type: 'integer', minimum: 1000, maximum: 10000 },
+        betAmount: { type: 'number', minimum: 0.01 }
+    },
+    required: ['gameId', 'spinCount'],
+    additionalProperties: false
+};
+
+const rtpSimulationResponseSchema = {
+    $id: 'rtpSimulationResponseSchema',
+    $schema: JSON_SCHEMA_DRAFT,
+    type: 'object',
+    properties: {
+        sessionId: { type: 'string' },
+        totalSpins: { type: 'integer' },
+        totalBet: { type: 'number' },
+        totalPayout: { type: 'number' },
+        calculatedRTP: { type: 'number', minimum: 0, maximum: 1 }
+    },
+    required: ['sessionId', 'calculatedRTP'],
+    additionalProperties: false
+};
+
+const rtpComplianceReportSchema = {
+    $id: 'rtpComplianceReportSchema',
+    $schema: JSON_SCHEMA_DRAFT,
+    type: 'object',
+    properties: {
+        gameId: { type: 'string' },
+        expectedRTP: { type: 'number', minimum: 0, maximum: 1 },
+        actualRTP: { type: 'number', minimum: 0, maximum: 1 },
+        variance: { type: 'number' },
+        isCompliant: { type: 'boolean' },
+        confidenceLevel: { type: 'number', minimum: 0, maximum: 1 }
+    },
+    required: ['gameId', 'expectedRTP', 'actualRTP', 'isCompliant'],
+    additionalProperties: false
+};
+
+// Schema for updating game RTP
+const updateGameRTPRequestSchema = {
+    $id: 'updateGameRTPRequestSchema',
+    $schema: JSON_SCHEMA_DRAFT,
+    type: 'object',
+    properties: {
+        gameId: { type: 'string' },
+        rtpValue: { type: 'number', minimum: 0, maximum: 1 }
+    },
+    required: ['gameId', 'rtpValue'],
+    additionalProperties: false
+};
+
+const updateGameRTPResponseSchema = {
+    $id: 'updateGameRTPResponseSchema',
+    $schema: JSON_SCHEMA_DRAFT,
+    type: 'object',
+    properties: {
+        gameId: { type: 'string' },
+        previousRTP: { type: 'number', minimum: 0, maximum: 1 },
+        newRTP: { type: 'number', minimum: 0, maximum: 1 },
+        updatedAt: { type: 'string', format: 'date-time' },
+        success: { type: 'boolean' }
+    },
+    required: ['gameId', 'newRTP', 'success'],
+    additionalProperties: false
+};
+
+// Utility class for schema operations
+class SchemaUtils {
+    /**
+     * Get all RTP validation schemas
+     * @returns {object} Object containing all RTP validation schemas
+     */
+    static getRTPValidationSchemas() {
+        return {
+            rtpSimulationRequestSchema,
+            rtpSimulationResponseSchema,
+            rtpComplianceReportSchema,
+            updateGameRTPRequestSchema,
+            updateGameRTPResponseSchema
+        };
+    }
+
+    /**
+     * Get all API schemas
+     * @returns {object} Object containing all API schemas
+     */
+    static getAllSchemas() {
+        return {
+            loginRequestSchema,
+            loginResponseSchema,
+            startGameSessionRequestSchema,
+            startGameSessionResponseSchema,
+            placeBetRequestSchema,
+            placeBetResponseSchema,
+            processPayoutResponseSchema,
+            errorResponseSchema,
+            ...this.getRTPValidationSchemas()
+        };
+    }
+
+    /**
+     * Get schema by ID
+     * @param {string} schemaId - The schema ID to retrieve
+     * @returns {object|null} The schema object or null if not found
+     */
+    static getSchemaById(schemaId) {
+        const allSchemas = this.getAllSchemas();
+        return Object.values(allSchemas).find(schema => schema.$id === schemaId) || null;
+    }
+}
 
 module.exports = {
+    // Core API schemas
     loginRequestSchema,
     loginResponseSchema,
     startGameSessionRequestSchema,
@@ -133,4 +250,17 @@ module.exports = {
     placeBetResponseSchema,
     processPayoutResponseSchema,
     errorResponseSchema,
+    
+    // RTP validation schemas
+    rtpSimulationRequestSchema,
+    rtpSimulationResponseSchema,
+    rtpComplianceReportSchema,
+    updateGameRTPRequestSchema,
+    updateGameRTPResponseSchema,
+    
+    // Utility class
+    SchemaUtils,
+    
+    // Constants
+    JSON_SCHEMA_DRAFT
 };

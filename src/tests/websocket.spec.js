@@ -1,9 +1,9 @@
 //Websocket interactions. Needs a webclient import in api-client.js
-// api/tests/websocket.spec.js
+// tests//websocket.spec.js
 
 const { test, expect } = require('@playwright/test');
-const { WEBSOCKET_URL } = require('../src/config/api-config');
-const { log } = require('../src/utils');
+const { WEBSOCKET_URL } = require('src/config/api-config');
+const { log } = require('src/utils');
 
 test.describe('WebSocket API Tests', () => {
     // This test suite would require a WebSocket client implementation

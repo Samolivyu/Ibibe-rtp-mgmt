@@ -1,241 +1,244 @@
-### API Component ft Postman.
+# RTP Gaming API - Integrated Testing & Validation Platform
+
+## Overview
+This project combines API testing, simulation, and RTP validation into a unified platform using a Postman-first approach with automated Playwright testing. The system enables real-time RTP validation through 5000+ spin simulations while maintaining seamless integration between your super admin site and Swagger API endpoints.
 
 ## Objective
-Build and maintain the API testing, simulation, and integration layer using a Postman-first approach. This component focuses on:
-- Rapid API development with Postman for manual validation
-- Seamless conversion to Playwright for automated testing
-- Unified documentation and team collaboration
+Build and maintain an integrated RTP testing platform that:
+- Validates RTP changes through automated spin simulations
+- Connects super admin interface with Swagger API endpoints
+- Uses Postman for rapid development and Playwright for automation
+- Provides comprehensive statistical analysis and compliance reporting
 
-**Key Change:** Postman is now the primary tool for initial development and validation before converting tests to Playwright.
+## 📋 Prerequisites
+
+### Dependencies Installation
+```bash
+# Install all dependencies in a single process
+npm install --save axios swagger-client ws lodash moment winston node-cron
+npm install --save-dev jest supertest @types/jest @types/supertest @playwright/test
+npm install -g newman postman-to-playwright swagger-to-postman-v2
+```
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+```bash
+npm install
+npm install -g newman postman-to-playwright swagger-to-postman-v2
+```
+
+### 2. Configure Environment
+```bash
+cp config/api-config.example.js config/api-config.js
+cp config/test-config.example.js config/test-config.js
+# Update with your Swagger endpoints and authentication
+```
+
+### 3. Initialize Postman Collections
+```bash
+npm run swagger:import
+npm run postman:sync
+```
+
+### 4. Run First RTP Test
+```bash
+npm run simulate:dev --game=<game_id> --spins=5000 --batch-size=500
+```
+
+---
 
 ## Tech Stack
 - **Core**: Node.js, JavaScript (ES6)
 - **Testing**: Playwright, Postman + Newman
 - **Validation**: AJV (JSON Schema Validation)
 - **Load Testing**: k6 (via Postman collection conversion)
+- **RTP Analysis**: Custom statistical validation engine
 
-## Your Enhanced Responsibilities
-As the API specialist, you now lead a hybrid workflow:
-- **Postman-First Development**: Create endpoints with immediate Postman validation
-- **Collection Management**: Maintain shared Postman collections
-- **Automation Bridge**: Convert Postman tests to Playwright scripts
-- **Documentation Sync**: Auto-generate docs from Postman
-- **Team Collaboration**: Shared Postman workspace for real-time collaboration
+## Architecture Overview
 
-## Component Interaction
 ```mermaid
 graph LR
-A[Postman] -->|Manual Validation| B(API Dev)
-B -->|Generate Docs| C[Postman Documentation]
-B -->|Convert Tests| D[Playwright Automation]
-D -->|CI/CD Pipeline| E[RTP Component]
-E -->|Fairness Reports| F[Compliance]
+A[Super Admin] -->|RTP Changes| B(Postman API)
+B -->|Manual Validation| C[Swagger Integration]
+C -->|Convert Tests| D[Playwright Automation]
+D -->|5000+ Spins| E[RTP Validation]
+E -->|Statistical Reports| F[Compliance Dashboard]
 ```
 
-## Workflow Restructure
+## 🗂️ Enhanced Folder Structure
 
-### Phase 1: Postman-Centric Development (Week 1-2)
-1. **Endpoint Prototyping**: Design APIs directly in Postman
-2. **Collection Building**: Create organized request groups
-3. **Environment Setup**: Configure dev/test/prod environments
-4. **Live Documentation**: Auto-generate docs from collections
-
-### Phase 2: Validation & Conversion (Week 3-4)
-1. **Test Scripting**: Write Postman validation scripts
-2. **Automated Conversion**: Generate Playwright tests from collections
-3. **Hybrid Testing**: Run parallel Postman/Playwright validation
-4. **Data Bridge**: Feed Postman test data to RTP component
-
-### Phase 3: Automation & Scaling (Week 5-6)
-1. **CI/CD Integration**: Run converted Playwright tests in pipelines
-2. **Load Testing**: Convert Postman collections to k6 scripts
-3. **Compliance Checks**: Automate RTP data validation
-4. **Lifecycle Management**: Sync Postman ↔ Playwright changes
-
-## Deliverables
-
-### Technical Deliverables
-- **Postman Collections**: 
-  - `RTP-Gaming-API.postman_collection.json`
-  - `RTP-Compliance-Tests.postman_collection.json`
-- **Playwright Converters**:
-  - `postman-to-playwright.js` (Conversion utility)
-  - `newman-runner.js` (CI/CD integration)
-- **Validation Bridge**:
-  - `rtp-data-collector.js` (Extracts test data for RTP)
-- **Environment Manager**:
-  - `env-sync.js` (Keeps Postman/Playwright envs in sync)
-
-### Documentation Deliverables
-1. **Auto-Generated API Docs** (From Postman)
-2. **Postman Playbook**:
-   - Collection structure guide
-   - Environment setup cheatsheet
-   - Test conversion workflow
-3. **Hybrid Testing Report**:
-   - Postman manual test results
-   - Playwright automated metrics
-   - Data integrity validation
-
-## Postman + Playwright Workflow
-
-```mermaid
-sequenceDiagram
-    Developer->>Postman: 1. Design endpoint
-    Postman->>Developer: 2. Immediate validation
-    Developer->>Postman: 3. Write test scripts
-    Postman->>Playwright: 4. Auto-convert tests
-    Playwright->>CI/CD: 5. Run regression tests
-    CI/CD->>RTP: 6. Send validation data
+```
+rtp-gaming-api/
+├── api/
+│   ├── swagger/                   # Original Swagger files
+│   │   ├── game-api.yaml
+│   │   └── rtp-api.yaml
+│   ├── postman/
+│   │   ├── collections/
+│   │   │   ├── swagger-import/    # Auto-generated from Swagger
+│   │   │   ├── gaming-api/        # Manually enhanced collections
+│   │   │   └── rtp-validation/
+│   │   └── environments/
+│   └── tests/
+│       ├── api/
+│       │   ├── swagger-converted/ # Auto-converted tests
+│       │   └── manual/            # Custom test cases
+│       └── integration/
+├── src/
+│   ├── clients/
+│   │   └── api-client.js          # Enhanced API client
+│   ├── services/                  # New service layer
+│   │   ├── rtp-orchestrator.js    # Main orchestration service
+│   │   ├── swagger-integration.js # Swagger API integration
+│   │   └── results-analyzer.js    # Statistical analysis service
+│   ├── config/
+│   │   ├── api-config.js          # Multi-environment config
+│   │   └── test-config.js         # Testing configuration
+│   ├── utils/
+│   │   ├── index.js               # Enhanced utilities
+│   │   ├── validation.js          # RTP validation utilities
+│   │   └── api-valid.js           # API validation
+│   ├── load/
+│   │   └── load-test.js           # Enhanced load testing
+│   ├── scripts/
+│   │   ├── api-index.js           # API orchestration
+│   │   ├── merge-collections.js   # Result aggregation
+│   │   └── sync-postman.js        # Postman synchronization
+│   └── tests/
+│       ├── api-integration.spec.js # Integration tests
+│       └── rtp-simulation.spec.js  # RTP simulation tests
+├── playwright-report/              # Enhanced reporting
+│   ├── custom-reporter.js         # Custom Playwright reporter
+│   └── test-templates/
+│       └── rtp-report.html        # RTP-specific report template
+├── database/
+│   └── test-results-schema.js     # Test results database schema
+├── node_modules/
+├── package.json
+└── server.js                      # Enhanced server with WebSocket support
 ```
 
-## Getting Started (Postman-First)
+---
 
-### 1. Install Tools
-```bash
-npm install -g newman postman-to-playwright
-```
-
-### 2. Setup Environment
-```bash
-# Clone Postman starter kit
-git clone https://github.com/rtpgaming/postman-starter
-cp config/env.example.json config/env.dev.json
-
-# Initialize Playwright
-npm init playwright@latest
-```
-
-### 3. Run Hybrid Workflow
-```bash
-# Develop in Postman
-npm run postman
-
-# Convert to Playwright
-npm run convert:postman-to-playwright
-
-# Run tests
-npm run test:hybrid
-```
-
-## Postman Integration Architecture
+## 🚀 Postman + Swagger Integration Workflow
 
 ### Collection Structure
 ```
 RTP Gaming API/
 ├── 📁 Authentication
-├── 📁 Game Sessions
+├── 📁 Game Sessions  
 ├── 📁 Bet Operations
 ├── 📁 RTP Validation
+├── 📁 5000+ Spin Simulations
 └── 📁 Performance Tests
 ```
 
-### Automated Conversion
-```javascript
-// postman-converter.js
-const { convert } = require('postman-to-playwright');
-
-module.exports = async (collectionPath) => {
-  return convert(collectionPath, {
-    output: 'tests/postman-converted',
-    tags: ['postman']
-  });
-};
-```
-
-### Test Data Bridge
-```javascript
-// rtp-data-bridge.js
-module.exports = {
-  extractFromPostman: (results) => {
-    return results.map(r => ({
-      betAmount: r.request?.body?.amount,
-      payout: r.response?.json?.payout,
-      gameId: r.response?.json?.gameId,
-      timestamp: new Date()
-    }));
-  }
-};
-```
-
-## Hybrid Testing Commands
-
-| Command | Action |
-|---------|--------|
-| `npm run postman` | Launch Postman with preloaded collections |
-| `npm run test:postman` | Run Postman tests via Newman |
-| `npm run convert:postman` | Generate Playwright tests from Postman |
-| `npm run test:hybrid` | Run Postman + Playwright tests sequentially |
-| `npm run docs:generate` | Create API docs from Postman collections |
-
-## RTP Integration Example
-```javascript
-// tests/rtp-integration.spec.js
-const { test } = require('@playwright/test');
-const rtpValidator = require('../rtp/validator');
-
-test('Postman data validates RTP compliance', async () => {
-  const postmanResults = require('../postman/results/latest.json');
-  const gameData = rtpDataBridge.extractFromPostman(postmanResults);
-  
-  const report = await rtpValidator.analyze(gameData);
-  
-  test.expect(report.complianceRate)
-    .toBeGreaterThanOrEqual(95);
-});
-```
-
-## Maintenance Workflow
-1. **Daily Development**:
-   - Create/update endpoints in Postman
-   - Validate with manual tests
-   - Commit collection changes to Git
-
-2. **CI/CD Pipeline**:
-```yaml
-jobs:
-  api-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm install
-      - run: npm run test:postman
-      - run: npm run convert:postman
-      - run: npm run test:playwright
-      - uses: actions/upload-artifact@v3
-        with:
-          name: postman-results
-          path: postman/results/
-```
-
-3. **Documentation Sync**:
+### Swagger Integration Process
 ```bash
-npm run docs:generate && git add docs/ && git commit -m "Update API docs"
+# 1. Import Swagger definitions (corrected syntax)
+npx swagger-to-postman-v2 -s api/swagger/game-api.yaml -o postman/collections/swagger-import.json
+
+# 2. Enhance with test scripts
+npm run postman:enhance-collections
+
+# 3. Convert to Playwright
+npm run convert:postman
+
+# 4. Run hybrid tests
+npm run test:hybrid
 ```
 
-## Benefits Realized
-- ⏱️ **70% faster development** with instant Postman validation
-- 🤝 **Real-time collaboration** via shared Postman workspace
-- 📊 **Single-source documentation** from Postman collections
-- 🔄 **Automated regression testing** via Playwright conversion
-- 📈 **Improved RTP validation** with direct test data bridging
+### RTP Testing Workflow
+```mermaid
+sequenceDiagram
+    SuperAdmin->>Postman: 1. Update RTP via API
+    Postman->>SwaggerAPI: 2. Validate endpoint
+    SwaggerAPI->>Playwright: 3. Trigger 5000 spins
+    Playwright->>ResultsDB: 4. Store simulation data
+    ResultsDB->>Reporter: 5. Generate RTP report
+    Reporter->>SuperAdmin: 6. Display compliance status
+```
 
-## Troubleshooting
+---
+
+## 🎯 Expected Outcomes
+
+### **Immediate Benefits**
+1. **Automated RTP Validation:** Super admin RTP changes → Automatic 5000+ spin validation
+2. **Real-time Monitoring:** Live progress tracking via WebSocket updates
+3. **Postman-First Development:** Rapid API endpoint validation and testing
+4. **Statistical Compliance:** Automated RTP accuracy reporting within 1% tolerance
+
+### **Workflow Improvements**
+1. **One-Click Testing:** Single command triggers complete RTP validation cycle
+2. **Hybrid Testing:** Postman manual validation + Playwright automation
+3. **Batch Operations:** Simultaneous testing across multiple games with configurable batch sizes
+4. **Compliance Reporting:** Auto-generated regulatory reports
+
+### **Technical Enhancements**
+1. **API Reliability:** Robust error handling with automatic retries
+2. **Performance Optimization:** Efficient handling of 5000+ spin simulations with batch processing
+3. **Data Pipeline:** Seamless flow from admin → API → simulation → analysis
+4. **Scalability:** Support for multiple environments and concurrent tests
+
+---
+
+## 📊 Hybrid Testing Commands
+
+| Command | Action | Duration (Estimate) |
+|---------|--------|----------|
+| `npm run postman:sync` | Sync Swagger → Postman collections | 30 seconds |
+| `npm run test:postman` | Run Postman tests via Newman | 2-5 minutes |
+| `npm run convert:postman` | Generate Playwright from Postman | 1 minute |
+| `npm run simulate:dev --game=<game_id> --batch-size=500` | Run 5000 spin RTP simulation | 5-10 minutes |
+| `npm run test:hybrid` | Full Postman + Playwright pipeline | 10-15 minutes |
+| `npm run docs:generate` | Generate API docs from collections | 1 minute |
+
+---
+
+## 📈 Success Metrics
+
+- **Automation Level:** 100% automated RTP validation workflow
+- **Simulation Capacity:** 5000+ spins completed in under 10 minutes with batch processing
+- **Error Detection:** RTP discrepancies caught within 1% accuracy
+- **Development Speed:** 70% faster API endpoint validation with Postman
+- **Reliability:** 99.9% successful test completion rate
+- **Compliance:** Automated regulatory reporting with statistical validation
+
+---
+
+## 🔧 Troubleshooting Guide
+
 **Problem:** Postman ↔ Playwright conversion fails  
-**Fix:** `npx postman-to-playwright@latest --fix-alignment`
+**Solution:** `npx postman-to-playwright@latest --validate-schema --fix-alignment`
 
-**Problem:** Environment variables out of sync  
-**Fix:** Run `npm run env:sync` to reconcile differences
-
-**Problem:** RTP data mismatch  
-**Fix:** Use `rtp-data-bridge verify` to audit data pipeline
+**Problem:** 5000+ spins cause memory issues  
+**Solution:** Enable batch processing in `test-config.js` with recommended batch size of 500 spins per batch:
+```javascript
+module.exports = {
+  simulation: {
+    batchSize: 500,
+    maxConcurrentBatches: 3,
+    memoryThreshold: '512MB'
+  }
+}
 ```
 
-Key improvements in this version:
-1. **Postman-First Workflow**: All development starts in Postman
-2. **Automated Conversion**: Built-in tools for Postman→Playwright conversion
-3. **Data Bridging**: Direct pipeline from Postman tests to RTP validation
-4. **Hybrid Commands**: Unified CLI for both testing environments
-5. **CI/CD Integration**: Ready-to-use pipeline configuration
-6. **Enhanced Collaboration**: Shared collections and environments
-7. **Documentation Automation**: API docs generated from Postman
+**Problem:** RTP calculations don't match expected values  
+**Solution:** Use `results-analyzer.js` debug mode to trace calculation pipeline:
+```bash
+npm run analyze:debug --game=<game_id> --verbose
+```
+
+**Problem:** Swagger import creates duplicate endpoints  
+**Solution:** Run `npm run postman:dedupe` to clean collections and verify swagger-to-postman-v2 syntax:
+```bash
+npx swagger-to-postman-v2 --validate-spec api/swagger/game-api.yaml
+```
+
+**Problem:** Batch processing configuration  
+**Solution:** Configure optimal batch sizes based on system resources:
+- **Low memory systems:** 250 spins per batch
+- **Standard systems:** 500 spins per batch (recommended)
+- **High-performance systems:** 1000 spins per batch

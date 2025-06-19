@@ -1,9 +1,9 @@
-// api/tests/api-load.spec.js
+// tests//api-load.spec.js
 
 const { test, expect } = require('@playwright/test');
-const LoadTest = require('../src/load/load-test'); // Corrected import
-const { LOAD_TEST_CONFIG } = require('../src/config/api-config');
-const { log } = require('../src/utils');
+const LoadTest = require('../load/load-test'); // Corrected import
+const { LOAD_TEST_CONFIG } = require('../config/api-config');
+const { log } = require('../utils');
 
 test.describe('API Load Tests', () => {
     test(`should handle ${LOAD_TEST_CONFIG.NUM_CONCURRENT_CLIENTS} concurrent clients for ${LOAD_TEST_CONFIG.DURATION_SECONDS} seconds`, async () => {

@@ -3,6 +3,9 @@
 const fetch = require('node-fetch'); // Use node-fetch for making HTTP requests
 const { API_BASE_URL, API_USERNAME, API_PASSWORD } = process.env;
 const API_CLIENT_ID = process.env.API_CLIENT_ID || 'default-api-test-client'; // Default client ID for API tests
+const SwaggerClient = require('swagger-client');
+const { log } = require('../utils');
+const { SWAGGER_SPEC_URL, RATE_LIMIT_CONFIG } = require('../config/api-config');
 
 /**
  * GameAPIClient: Handles all interactions with the Gaming API.
@@ -14,7 +17,7 @@ const API_CLIENT_ID = process.env.API_CLIENT_ID || 'default-api-test-client'; //
  * @param {string} [options.password] - Password for authentication (if applicable).
  */
 class ApiClient {
-    constructor(options) {
+    constructor(options = {}) {
         this.baseURL = options.baseURL || API_BASE_URL;
         this.clientId = options.clientId || API_CLIENT_ID;
         this.username = options.username || API_USERNAME;
@@ -30,7 +33,160 @@ class ApiClient {
         };
 
         if (!this.baseURL) {
-            console.warn("API_BASE_URL is not set in .env or options. Using a fallback, which might not be correct.");
+            log("API_BASE_URL is not set in .env or options. Using a fallback, which might not be correct.", 'warn');
+        }
+
+        this.swaggerClient = null;
+        this.rateLimit = {
+            remaining: RATE_LIMIT_CONFIG.MAX_REQUESTS,
+            resetTime: Date.now() + RATE_LIMIT_CONFIG.PER_MINUTE * 60000
+        };
+    }
+
+    /**
+     * Request interceptor for rate limiting and logging
+     * @param {object} request - The request object
+     * @returns {Promise<object>} The modified request object
+     */
+    async _requestInterceptor(request) {
+        log(`Request: ${request.method} ${request.url}`, 'debug');
+        
+        // Rate limiting check
+        if (this.rateLimit.remaining <= 0 && Date.now() < this.rateLimit.resetTime) {
+            const waitTime = Math.ceil((this.rateLimit.resetTime - Date.now()) / 1000);
+            log(`Rate limit exceeded. Waiting ${waitTime} seconds`, 'warn');
+            await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+            
+            // Reset rate limit after waiting
+            this.rateLimit.remaining = RATE_LIMIT_CONFIG.MAX_REQUESTS;
+            this.rateLimit.resetTime = Date.now() + RATE_LIMIT_CONFIG.PER_MINUTE * 60000;
+        }
+        
+        // Decrement remaining requests
+        this.rateLimit.remaining--;
+        
+        return request;
+    }
+
+    /**
+     * Response interceptor for logging and rate limit tracking
+     * @param {object} response - The response object
+     * @returns {object} The response object
+     */
+    _responseInterceptor(response) {
+        log(`Response: ${response.status} ${response.url}`, 'debug');
+        
+        // Update rate limit from response headers if available
+        if (response.headers && response.headers['x-ratelimit-remaining']) {
+            this.rateLimit.remaining = parseInt(response.headers['x-ratelimit-remaining']);
+        }
+        if (response.headers && response.headers['x-ratelimit-reset']) {
+            this.rateLimit.resetTime = parseInt(response.headers['x-ratelimit-reset']) * 1000;
+        }
+        
+        return response;
+    }
+
+    /**
+     * Initialize Swagger client
+     * @returns {Promise<object>} The initialized Swagger client
+     */
+    async initSwaggerClient() {
+        try {
+            this.swaggerClient = await new SwaggerClient({
+                url: SWAGGER_SPEC_URL,
+                requestInterceptor: this._requestInterceptor.bind(this),
+                responseInterceptor: this._responseInterceptor.bind(this)
+            });
+            log('Swagger client initialized successfully', 'success');
+            return this.swaggerClient;
+        } catch (error) {
+            log(`Failed to initialize Swagger client: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Update game RTP value
+     * @param {string} gameId - The game ID
+     * @param {number} newRTP - The new RTP value
+     * @returns {Promise<object>} The update response
+     */
+    async updateGameRTP(gameId, newRTP) {
+        if (!this.swaggerClient) {
+            throw new Error('Swagger client not initialized. Call initSwaggerClient() first.');
+        }
+        
+        try {
+            const response = await this.swaggerClient.apis.Admin.updateGameRTP({
+                gameId,
+                body: { rtpValue: newRTP }
+            });
+            return response.body;
+        } catch (error) {
+            log(`Error updating game RTP for game ${gameId}: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Run spin simulation
+     * @param {string} gameId - The game ID
+     * @param {number} spinCount - Number of spins to simulate
+     * @returns {Promise<string>} The simulation session ID
+     */
+    async runSpinSimulation(gameId, spinCount) {
+        if (!this.swaggerClient) {
+            throw new Error('Swagger client not initialized. Call initSwaggerClient() first.');
+        }
+        
+        try {
+            const response = await this.swaggerClient.apis.Simulation.startSimulation({
+                gameId,
+                body: { spinCount }
+            });
+            return response.body.sessionId;
+        } catch (error) {
+            log(`Error running spin simulation for game ${gameId}: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Get simulation results
+     * @param {string} sessionId - The simulation session ID
+     * @returns {Promise<object>} The simulation results
+     */
+    async getSimulationResults(sessionId) {
+        if (!this.swaggerClient) {
+            throw new Error('Swagger client not initialized. Call initSwaggerClient() first.');
+        }
+        
+        try {
+            const response = await this.swaggerClient.apis.Simulation.getResults({ sessionId });
+            return response.body;
+        } catch (error) {
+            log(`Error getting simulation results for session ${sessionId}: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Validate RTP endpoint
+     * @param {string} gameId - The game ID
+     * @returns {Promise<object>} The validation response
+     */
+    async validateRTPEndpoint(gameId) {
+        if (!this.swaggerClient) {
+            throw new Error('Swagger client not initialized. Call initSwaggerClient() first.');
+        }
+        
+        try {
+            const response = await this.swaggerClient.apis.Validation.validateRTP({ gameId });
+            return response.body;
+        } catch (error) {
+            log(`Error validating RTP endpoint for game ${gameId}: ${error.message}`, 'error');
+            throw error;
         }
     }
 
@@ -52,16 +208,17 @@ class ApiClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Login failed: ${response.status} - ${errorData.message || response.statusText}`);
             }
 
             const data = await response.json();
             this.authToken = data.token;
             this.headers['Authorization'] = `Bearer ${this.authToken}`;
+            log(`Login successful for client ${this.clientId}`, 'success');
             return data;
         } catch (error) {
-            console.error(`Error during API login for client ${this.clientId}:`, error.message);
+            log(`Error during API login for client ${this.clientId}: ${error.message}`, 'error');
             throw error;
         }
     }
@@ -75,6 +232,7 @@ class ApiClient {
         if (!this.authToken) {
             throw new Error('Not authenticated. Please call login() first.');
         }
+        
         try {
             const response = await fetch(`${this.baseURL}/game/start`, {
                 method: 'POST',
@@ -84,15 +242,16 @@ class ApiClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Failed to start game session: ${response.status} - ${errorData.message || response.statusText}`);
             }
 
             const data = await response.json();
             this.sessionId = data.id; // Store the session ID
+            log(`Game session started for client ${this.clientId}, game ${gameId}`, 'success');
             return data;
         } catch (error) {
-            console.error(`Error starting game session for client ${this.clientId}, game ${gameId}:`, error.message);
+            log(`Error starting game session for client ${this.clientId}, game ${gameId}: ${error.message}`, 'error');
             throw error;
         }
     }
@@ -126,19 +285,22 @@ class ApiClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Failed to place bet: ${response.status} - ${errorData.message || response.statusText}`);
             }
 
             const data = await response.json();
+            
             // Ensure the response contains the shared data model fields
             if (typeof data.betAmount !== 'number' || typeof data.payout !== 'number' || !data.gameId || !data.clientId) {
-                console.warn("API response for placeBet is missing expected RTP data fields (betAmount, payout, gameId, clientId).", data);
-                // Optionally throw an error or handle gracefully
+                log("API response for placeBet is missing expected RTP data fields (betAmount, payout, gameId, clientId).", 'warn');
+                log(`Response data: ${JSON.stringify(data)}`, 'debug');
             }
+            
+            log(`Bet placed for client ${this.clientId}, game ${gameId}, amount ${betAmount}`, 'success');
             return data; // This should contain betAmount, payout, gameId, clientId
         } catch (error) {
-            console.error(`Error placing bet for client ${this.clientId}, game ${gameId}, amount ${betAmount}:`, error.message);
+            log(`Error placing bet for client ${this.clientId}, game ${gameId}, amount ${betAmount}: ${error.message}`, 'error');
             throw error;
         }
     }
@@ -153,6 +315,7 @@ class ApiClient {
         if (!this.authToken) {
             throw new Error('Not authenticated. Please call login() first.');
         }
+        
         try {
             const response = await fetch(`${this.baseURL}/bet/payout/${transactionId}`, {
                 method: 'POST', // Or GET, depending on API design
@@ -161,13 +324,15 @@ class ApiClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Failed to process payout: ${response.status} - ${errorData.message || response.statusText}`);
             }
+            
             const data = await response.json();
+            log(`Payout processed for transaction ${transactionId}`, 'success');
             return data;
         } catch (error) {
-            console.error(`Error processing payout for transaction ${transactionId}:`, error.message);
+            log(`Error processing payout for transaction ${transactionId}: ${error.message}`, 'error');
             throw error;
         }
     }
@@ -183,6 +348,7 @@ class ApiClient {
         if (!this.authToken) {
             throw new Error('Not authenticated.');
         }
+        
         try {
             const response = await fetch(`${this.baseURL}/game/end/${this.sessionId}`, {
                 method: 'DELETE', // Or POST, depending on API design
@@ -191,18 +357,48 @@ class ApiClient {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(`Failed to end game session: ${response.status} - ${errorData.message || response.statusText}`);
             }
+            
+            const sessionId = this.sessionId;
             this.sessionId = null; // Clear session ID
-            return await response.json();
+            const data = await response.json();
+            log(`Game session ${sessionId} ended successfully`, 'success');
+            return data;
         } catch (error) {
-            console.error(`Error ending game session ${this.sessionId}:`, error.message);
+            log(`Error ending game session ${this.sessionId}: ${error.message}`, 'error');
             throw error;
         }
     }
 
-    // Add other API methods as needed (e.g., getClientBalance, getBetHistory)
+    /**
+     * Check if client is authenticated
+     * @returns {boolean} Authentication status
+     */
+    isAuthenticated() {
+        return !!this.authToken;
+    }
+
+    /**
+     * Check if there's an active game session
+     * @returns {boolean} Session status
+     */
+    hasActiveSession() {
+        return !!this.sessionId;
+    }
+
+    /**
+     * Get current rate limit status
+     * @returns {object} Rate limit information
+     */
+    getRateLimitStatus() {
+        return {
+            remaining: this.rateLimit.remaining,
+            resetTime: this.rateLimit.resetTime,
+            resetIn: Math.max(0, Math.ceil((this.rateLimit.resetTime - Date.now()) / 1000))
+        };
+    }
 }
 
 module.exports = ApiClient;

@@ -22,6 +22,56 @@ class LoadTest { // Renamed class to LoadTest
         this.latencies = [];
     }
 
+
+    /**
+     * Runs RTP simulation load test
+     * @param {number} spinCount - Number of spins per simulation
+     * @param {number} batchSize - Number of concurrent simulations
+     */
+    async runRtpSimulationTest(spinCount, batchSize) {
+        log(`Starting RTP simulation load test: ${batchSize} concurrent simulations of ${spinCount} spins`, 'info');
+        const startTime = Date.now();
+        
+        // Create simulation batches
+        const batches = [];
+        for (let i = 0; i < batchSize; i++) {
+            batches.push(this.runSingleSimulation(spinCount, i));
+        }
+        
+        // Run all batches concurrently
+        await Promise.all(batches);
+        
+        const duration = (Date.now() - startTime) / 1000;
+        log(`RTP simulation load test completed in ${duration} seconds`, 'success');
+    }
+
+    /**
+     * Runs a single simulation
+     * @param {number} spinCount - Number of spins
+     * @param {number} batchId - Batch identifier
+     */
+    async runSingleSimulation(spinCount, batchId) {
+        const client = this.clients[batchId % this.clients.length];
+        try {
+            const startTime = Date.now();
+            const sessionId = await client.runSpinSimulation(this.gameId, spinCount);
+            const results = await client.getSimulationResults(sessionId);
+            
+            // Calculate and validate RTP
+            const totalBet = results.reduce((sum, r) => sum + r.betAmount, 0);
+            const totalPayout = results.reduce((sum, r) => sum + r.payout, 0);
+            const rtp = (totalPayout / totalBet) * 100;
+            
+            this.latencies.push(Date.now() - startTime);
+            this.simulationResults.push({ batchId, rtp, spinCount, duration: Date.now() - startTime });
+            
+            log(`Batch ${batchId}: RTP ${rtp.toFixed(2)}% from ${spinCount} spins`, 'info');
+        } catch (error) {
+            log(`Batch ${batchId} failed: ${error.message}`, 'error');
+            this.failedRequests++;
+        }
+    }
+
     /**
      * Initializes the specified number of API clients.
      */

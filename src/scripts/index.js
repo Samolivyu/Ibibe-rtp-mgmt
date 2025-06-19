@@ -1,49 +1,55 @@
-//Meetup for API util scripts.
-// api/scripts/index.js
+// src/scripts/index.js
+const { log } = require('../utils/index');
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+const RTPOrchestrator = require('../services/rtp-orchestrator');
 
-const { log } = require('../src/utils'); // Assuming api/src/utils/index.js exists
-const LoadTest = require('../src/load/load-test'); // Import the LoadTest class
-const { LOAD_TEST_CONFIG } = require('../src/config/api-config');
 
-/**
- * Main script runner for API utilities.
- */
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    version: process.env.npm_package_version
+  });
+});
+
+// Export server instance instead of starting it
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// Handle server errors
+server.on('error', (error) => {
+    console.error('Server startup error:', error);
+    process.exit(1);
+});
+
 async function runApiScript(scriptName, args = {}) {
     log(`Running API script: ${scriptName}`, 'info');
     try {
         switch (scriptName) {
-            case 'run-load-test':
-                log('Initiating API load test...', 'info');
-                const loadTestManager = new LoadTest(LOAD_TEST_CONFIG);
-                await loadTestManager.runFullTest();
-                log('API load test completed.', 'success');
+            // ... existing cases ...
+            case 'run-rtp-test':
+                log('Starting RTP validation test...', 'info');
+                const orchestrator = new RTPOrchestrator();
+                await orchestrator.runFullTest(args.gameId);
+                log('RTP test completed successfully', 'success');
                 break;
-            case 'cleanup':
-                log('Performing API specific cleanup...', 'info');
-                // Add API specific cleanup logic here (e.g., clearing mock data, resetting test state)
-                log('API cleanup completed.', 'success');
+            case 'run-simulation':
+                log('Starting spin simulation...', 'info');
+                const simulationId = await orchestrator.runSimulation(
+                    args.gameId, 
+                    args.spinCount || 5000
+                );
+                log(`Simulation started with ID: ${simulationId}`, 'success');
                 break;
-            // Add more cases for other API utility scripts
             default:
-                log(`Unknown API script: ${scriptName}`, 'error');
-                console.log('Available scripts: run-load-test, cleanup');
+                // ... existing default ...
         }
     } catch (error) {
-        log(`Error running script ${scriptName}: ${error.message}`, 'error');
+        logError(error, `runApiScript:${scriptName}`);
         process.exit(1);
     }
 }
 
-// Allow running specific scripts via command line
-if (require.main === module) {
-    const scriptName = process.argv[2];
-    if (scriptName) {
-        runApiScript(scriptName);
-    } else {
-        log('Please provide a script name as an argument (e.g., node scripts/index.js run-load-test)', 'warn');
-    }
-}
-
-module.exports = {
-    runApiScript,
-};
+module.exports = server;

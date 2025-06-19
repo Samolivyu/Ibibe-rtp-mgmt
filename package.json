@@ -4,27 +4,39 @@
   "description": "API testing, simulation, and integration layer for gaming applications.",
   "main": "index.js",
   "scripts": {
-    "test:api": "npx playwright test tests/api-integration.spec.js",
-    "test:load": "npx playwright test tests/api-load.spec.js",
-    "test:websocket": "npx playwright test tests/websocket.spec.js",
-    "test": "npm run test:api && npm run test:load && npm run test:websocket",
-    "dev:api": "echo 'Start your API server here, e.g., node src/server.js' && sleep 1",
-    "setup:api": "echo 'API setup might involve database seeding or mock server setup'",
-    "report:api": "npx playwright show-report playwright-report",
-    "run-load-test": "node scripts/index.js run-load-test",
-    "postinstall": "mkdir -p reports data"
+    "start": "node src/server.js",
+    "run-load-test": "node src/scripts/index.js run-load-test",
+    "test": "playwright test",
+    "test:api": "playwright test --project=api-tests",
+    "test:ws": "playwright test --project=websocket-tests",
+    "test:load": "playwright test --project=load-tests",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "import:swagger": "swagger2postman -s swagger/game-api.yaml -o postman/collections/swagger-import/game-api.json",
+    "postman:sync": "node scripts/sync-postman.js",
+    "test:swagger": "playwright test tests/api/swagger-converted",
+    "docs:generate": "postman-to-openapi postman/collections/gaming-api -o swagger/game-api-updated.yaml",
+    "test:list": "playwright test --list"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@playwright/test": "^1.44.1",
+    "ajv": "^8.16.0",
+    "axios": "^1.10.0",
     "chalk": "^4.1.2",
+    "chart.js": "^4.5.0",
     "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.16.0",
+    "node-cron": "^4.1.0",
     "node-fetch": "^2.7.0",
-    "ajv": "^8.16.0"
+    "swagger-client": "^3.35.5",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@types/node": "^24.0.3",
     "ws": "^8.16.0"
   }
 }

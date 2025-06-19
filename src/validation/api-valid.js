@@ -26,6 +26,35 @@ class ApiValid { // Renamed class to ApiValid
      * @param {object|string} schema - The schema object or the ID string of the schema (from api-schemas.js).
      * @returns {object} - { isValid: boolean, errors: array }
      */
+
+
+     /**
+     * Validates RTP simulation request payload
+     * @param {object} payload - RTP simulation request
+     * @returns {object} - Validation result
+     */
+    validateRTPSimulationRequest(payload) {
+        return this.validate(payload, 'rtpSimulationRequestSchema');
+    }
+
+    /**
+     * Validates RTP simulation results
+     * @param {object} payload - Simulation results
+     * @returns {object} - Validation result
+     */
+    validateRTPSimulationResponse(payload) {
+        return this.validate(payload, 'rtpSimulationResponseSchema');
+    }
+
+    /**
+     * Validates RTP compliance report
+     * @param {object} payload - Compliance report
+     * @returns {object} - Validation result
+     */
+    validateRTPComplianceReport(payload) {
+        return this.validate(payload, 'rtpComplianceReportSchema');
+    }
+    
     validate(data, schema) {
         let validateFn;
         if (typeof schema === 'string') {

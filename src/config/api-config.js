@@ -5,7 +5,7 @@ const path = require('path');
 
 const config = {
     // Base URL for the API (can be overridden by .env)
-    API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000/api',
+  MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/rtp-testing',
 
     // Default credentials for API client tests
     DEFAULT_USERNAME: process.env.API_USERNAME || 'testuser',
@@ -29,7 +29,46 @@ const config = {
 
     // WebSocket settings (if applicable)
     WEBSOCKET_URL: process.env.WEBSOCKET_URL || 'ws://localhost:3000/ws',
-    WEBSOCKET_TIMEOUT_MS: 10000,
+    WEBSOCKET_TIMEOUT_MS: 1000000,
+
+
+  // Swagger integration
+    SWAGGER_SPEC_URL: process.env.SWAGGER_SPEC_URL || 'https://api.example.com/swagger.json',
+    SWAGGER_ENVIRONMENTS: {
+        dev: {
+            baseUrl: 'http://localhost:3000',
+            apiKey: process.env.SWAGGER_DEV_API_KEY || 'dev-key'
+        },
+        staging: {
+            baseUrl: 'https://staging.api.example.com',
+            apiKey: process.env.SWAGGER_STAGING_API_KEY || 'staging-key'
+        },
+        prod: {
+            baseUrl: 'https://api.example.com',
+            apiKey: process.env.SWAGGER_PROD_API_KEY || 'prod-key'
+        }
+    },
+    
+    // Rate limiting
+    RATE_LIMIT_CONFIG: {
+        MAX_REQUESTS: 100,
+        PER_MINUTE: 1
+    },
+    
+    // Simulation defaults
+    SIMULATION_DEFAULTS: {
+        SPIN_COUNT: 5000,
+        BATCH_SIZE: 100,
+        TIMEOUT_MS: 300000 // 5 minutes
+    },
+    
+    // Validation thresholds
+    VALIDATION_THRESHOLDS: {
+        RTP_MIN: 85,
+        RTP_MAX: 98,
+        ACCEPTABLE_VARIANCE: 1.5
+    }
+
 };
 
 module.exports = config;
