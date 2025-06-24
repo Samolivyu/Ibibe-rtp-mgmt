@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: CASINO CLIENT Gaming API
+  version: 2.0.0
+paths:
+  /api/v2/games/{gameId}/settings:
+    get:
+      summary: Get game settings
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  returnToPlayer:
+                    type: number
+                    example: 97.2
+                    x-rtp: 97.2

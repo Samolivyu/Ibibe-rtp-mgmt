@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: PLAY TEST Gaming API
+  version: 1.0.0
+paths:
+  /api/v1/games/{gameId}/config:
+    get:
+      summary: Get game configuration
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rtp:
+                    type: number
+                    example: 96.5
+                    x-rtp: 96.5

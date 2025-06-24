@@ -4,39 +4,30 @@
   "description": "API testing, simulation, and integration layer for gaming applications.",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "run-load-test": "node src/scripts/index.js run-load-test",
+    "start": "node src/app.js",
     "test": "playwright test",
-    "test:api": "playwright test --project=api-tests",
-    "test:ws": "playwright test --project=websocket-tests",
-    "test:load": "playwright test --project=load-tests",
-    "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report",
-    "import:swagger": "swagger2postman -s swagger/game-api.yaml -o postman/collections/swagger-import/game-api.json",
-    "postman:sync": "node scripts/sync-postman.js",
-    "test:swagger": "playwright test tests/api/swagger-converted",
-    "docs:generate": "postman-to-openapi postman/collections/gaming-api -o swagger/game-api-updated.yaml",
-    "test:list": "playwright test --list"
+    "test:list": "node src/tests/test-discovery.js",
+    "test:rtp": "playwright test src/tests/rtp-validation.spec.js",
+    "report": "playwright show-report reports/results",
+    "analyze": "node src/core/results.anal.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ajv": "^8.16.0",
     "axios": "^1.10.0",
+    "axios-rate-limit": "^1.4.0",
     "chalk": "^4.1.2",
-    "chart.js": "^4.5.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
-    "express": "^5.1.0",
-    "mongoose": "^8.16.0",
-    "node-cron": "^4.1.0",
+    "js-yaml": "^4.1.0",
+    "mathjs": "^14.5.2",
     "node-fetch": "^2.7.0",
-    "swagger-client": "^3.35.5",
+    "playwright": "^1.53.1",
     "winston": "^3.17.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.0",
-    "@types/node": "^24.0.3",
-    "ws": "^8.16.0"
+    "@types/node": "^24.0.3"
   }
 }

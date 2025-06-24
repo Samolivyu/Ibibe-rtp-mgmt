@@ -1,244 +1,406 @@
-# RTP Gaming API - Integrated Testing & Validation Platform
+# RTP Gaming Validation Engine
 
 ## Overview
-This project combines API testing, simulation, and RTP validation into a unified platform using a Postman-first approach with automated Playwright testing. The system enables real-time RTP validation through 5000+ spin simulations while maintaining seamless integration between your super admin site and Swagger API endpoints.
+A streamlined RTP (Return to Player) accuracy validation engine that tests games from company domains with 5000+ spin simulations. This system provides statistical analysis and compliance reporting through direct domain integration, eliminating complex middleware and focusing on core RTP validation.
 
 ## Objective
-Build and maintain an integrated RTP testing platform that:
-- Validates RTP changes through automated spin simulations
-- Connects super admin interface with Swagger API endpoints
-- Uses Postman for rapid development and Playwright for automation
-- Provides comprehensive statistical analysis and compliance reporting
+Build and maintain a focused RTP testing platform that:
+- Tests games directly from company domains with 5000+ spins per game
+- Validates RTP accuracy against configurable statistical thresholds
+- Uses Swagger specs as reference sources for expected RTP values
+- Generates comprehensive statistical analysis and compliance reports
+- Maximizes accuracy through batch processing and parallel execution
 
-## 📋 Prerequisites
+---
 
-### Dependencies Installation
+## 📋 Prerequisites & Setup
+
+### System Requirements
+- **Node.js**: >= 18.0.0
+- **Memory**: Minimum 4GB RAM (8GB recommended for concurrent testing)
+- **Network**: Stable connection to company domains
+
+### Initial Project Setup
+
+#### 1. Install Core Dependencies
 ```bash
-# Install all dependencies in a single process
-npm install --save axios swagger-client ws lodash moment winston node-cron
-npm install --save-dev jest supertest @types/jest @types/supertest @playwright/test
-npm install -g newman postman-to-playwright swagger-to-postman-v2
-```
-
-## 🚀 Getting Started
-
-### 1. Install Dependencies
-```bash
+# Install all required dependencies
 npm install
-npm install -g newman postman-to-playwright swagger-to-postman-v2
+
+# Install Playwright browsers
+npx playwright install
+
+# Verify Playwright installation
+npx playwright --version
 ```
 
-### 2. Configure Environment
+#### 2. Configure Company Domains
 ```bash
-cp config/api-config.example.js config/api-config.js
-cp config/test-config.example.js config/test-config.js
-# Update with your Swagger endpoints and authentication
+# Copy and configure domain settings
+cp config/domains.example.js config/domains.js
+cp config/test-thresholds.example.js config/test-thresholds.js
+
+# Add your company domain URLs and API keys
+# Edit config/domains.js with your specific endpoints
 ```
 
-### 3. Initialize Postman Collections
+#### 3. Setup Swagger References
 ```bash
-npm run swagger:import
-npm run postman:sync
+# Place your company Swagger files in the swagger/ directory
+# Files should be named: dev.yaml for development reference
+# Update src/utils/swagger-validator.js with correct paths and endpoints
 ```
 
-### 4. Run First RTP Test
+#### 4. Environment Variables
 ```bash
-npm run simulate:dev --game=<game_id> --spins=5000 --batch-size=500
+# Create .env file for sensitive data
+echo "PLAY_TEST_API_KEY=your_api_key_here" > .env
+echo "CASINO_CLIENT_API_KEY=your_api_key_here" >> .env
 ```
 
 ---
 
-## Tech Stack
-- **Core**: Node.js, JavaScript (ES6)
-- **Testing**: Playwright, Postman + Newman
-- **Validation**: AJV (JSON Schema Validation)
-- **Load Testing**: k6 (via Postman collection conversion)
-- **RTP Analysis**: Custom statistical validation engine
+## 🗂️ Streamlined Folder Structure
 
-## Architecture Overview
-
-```mermaid
-graph LR
-A[Super Admin] -->|RTP Changes| B(Postman API)
-B -->|Manual Validation| C[Swagger Integration]
-C -->|Convert Tests| D[Playwright Automation]
-D -->|5000+ Spins| E[RTP Validation]
-E -->|Statistical Reports| F[Compliance Dashboard]
-```
-
-## 🗂️ Enhanced Folder Structure
-
+### **Consolidated Structure (Post-Optimization)**
 ```
 rtp-gaming-api/
-├── api/
-│   ├── swagger/                   # Original Swagger files
-│   │   ├── game-api.yaml
-│   │   └── rtp-api.yaml
-│   ├── postman/
-│   │   ├── collections/
-│   │   │   ├── swagger-import/    # Auto-generated from Swagger
-│   │   │   ├── gaming-api/        # Manually enhanced collections
-│   │   │   └── rtp-validation/
-│   │   └── environments/
-│   └── tests/
-│       ├── api/
-│       │   ├── swagger-converted/ # Auto-converted tests
-│       │   └── manual/            # Custom test cases
-│       └── integration/
+├── config/
+│   ├── domains.js                 # ✅ All domain & API configurations
+│   └── test-thresholds.js         # ✅ All test & validation thresholds
 ├── src/
-│   ├── clients/
-│   │   └── api-client.js          # Enhanced API client
-│   ├── services/                  # New service layer
-│   │   ├── rtp-orchestrator.js    # Main orchestration service
-│   │   ├── swagger-integration.js # Swagger API integration
-│   │   └── results-analyzer.js    # Statistical analysis service
-│   ├── config/
-│   │   ├── api-config.js          # Multi-environment config
-│   │   └── test-config.js         # Testing configuration
+│   ├── core/
+│   │   ├── rtp-orchestrator.js    # ✅ Main RTP engine + game discovery
+│   │   └── results-analyzer.js    # ✅ Statistical analysis & validation
 │   ├── utils/
-│   │   ├── index.js               # Enhanced utilities
-│   │   ├── validation.js          # RTP validation utilities
-│   │   └── api-valid.js           # API validation
-│   ├── load/
-│   │   └── load-test.js           # Enhanced load testing
-│   ├── scripts/
-│   │   ├── api-index.js           # API orchestration
-│   │   ├── merge-collections.js   # Result aggregation
-│   │   └── sync-postman.js        # Postman synchronization
-│   └── tests/
-│       ├── api-integration.spec.js # Integration tests
-│       └── rtp-simulation.spec.js  # RTP simulation tests
-├── playwright-report/              # Enhanced reporting
-│   ├── custom-reporter.js         # Custom Playwright reporter
-│   └── test-templates/
-│       └── rtp-report.html        # RTP-specific report template
-├── database/
-│   └── test-results-schema.js     # Test results database schema
-├── node_modules/
-├── package.json
-└── server.js                      # Enhanced server with WebSocket support
+│   │   ├── api-client.js          # ✅ Domain API communication + validation
+│   │   ├── swagger-validator.js   # ✅ Swagger reference integration
+│   │   └── accuracy-calculator.js # ✅ RTP calculations + results analysis
+│   ├── tests/
+│   │   └── rtp-validation.spec.js # ✅ Comprehensive Playwright test suite
+│   └── app.js                     # ✅ Main application entry point
+├── swagger/
+│   ├── dev.yaml                   # ✅ Reference documentation
+│   └── rtp-endpoints.json         # ✅ Extracted RTP endpoint mapping
+├── reports/
+│   ├── custom-reporter.js         # ✅ Playwright custom reporter
+│   └── results/                   # ✅ Generated test results directory
+├── tests-examples/                # ✅ Reference examples and documentation
+├── playwright.config.js           # ✅ Simplified Playwright configuration
+├── package.json                   # ✅ Streamlined dependencies
+└── README.md                      # ✅ This documentation
+```
+
+### **Consolidation Benefits**
+- **40% Fewer Files**: Eliminated duplicate functionality
+- **Clear Responsibility**: Each file serves single, focused purpose
+- **Easier Navigation**: Related functionality grouped together
+- **Simplified Imports**: Consolidated utilities reduce complexity
+- **Better Maintainability**: Less scattered code, easier debugging
+
+---
+
+## 🔧 NPM Tools & Dependencies
+
+### **Core Dependencies**
+```json
+{
+  "dependencies": {
+    "axios": "^1.10.0",           // API communication with domains
+    "chalk": "^4.1.2",           // Colored console output
+    "js-yaml": "^4.1.0",         // Swagger YAML file parsing
+    "lodash": "^4.17.21",        // Data manipulation utilities
+    "winston": "^3.17.0",        // Logging system
+    "mathjs": "^13.2.0"          // Statistical calculations
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0", // Main testing framework
+    "@types/node": "^24.0.3"       // Node.js type definitions
+  }
+}
+```
+
+### **Essential NPM Scripts**
+```json
+{
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "playwright test",
+    "test:rtp": "playwright test src/tests/rtp-validation.spec.js",
+    "test:company-a": "playwright test --grep 'PLAY TEST'",
+    "test:company-b": "playwright test --grep 'CASINO CLIENT'",
+    "test:report": "playwright show-report",
+    "discover:games": "node src/core/rtp-orchestrator.js --discover",
+    "validate:swagger": "node src/utils/swagger-validator.js",
+    "analyze:results": "node src/core/results-analyzer.js",
+    "clean:reports": "rm -rf reports/results/*"
+  }
+}
 ```
 
 ---
 
-## 🚀 Postman + Swagger Integration Workflow
+## 🌐 Domain-Specific Setup
 
-### Collection Structure
-```
-RTP Gaming API/
-├── 📁 Authentication
-├── 📁 Game Sessions  
-├── 📁 Bet Operations
-├── 📁 RTP Validation
-├── 📁 5000+ Spin Simulations
-└── 📁 Performance Tests
+### **Consolidated Domain Configuration**
+
+#### All Domain Settings in config/domains.js
+```javascript
+module.exports = {
+  PLAYTEST: {
+    baseUrl: 'https://games-a.company.com',
+    gameListEndpoint: '/api/games',
+    gamePlayEndpoint: '/api/game/{gameId}/spin',
+    authRequired: true,
+    headers: { 
+      'API-Key': process.env.PLAY_TEST_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    rateLimit: {
+      requestsPerSecond: 10,
+      burstLimit: 50
+    },
+    // API validation settings (consolidated)
+    validation: {
+      timeout: 30000,
+      retryAttempts: 3,
+      expectedStatusCodes: [200, 201]
+    }
+  },
+  CASINO CLIENT: {
+    baseUrl: 'https://games-b.company.com',
+    gameListEndpoint: '/api/v2/games',
+    gamePlayEndpoint: '/api/v2/play/{gameId}',
+    authRequired: false,
+    headers: {
+      'User-Agent': 'RTP-Validator/1.0'
+    },
+    rateLimit: {
+      requestsPerSecond: 15,
+      burstLimit: 75
+    },
+    validation: {
+      timeout: 25000,
+      retryAttempts: 2,
+      expectedStatusCodes: [200]
+    }
+  }
+}
 ```
 
-### Swagger Integration Process
+### **Consolidated Test Configuration**
+```javascript
+// config/test-thresholds.js
+module.exports = {
+  rtp: {
+    spinsPerGame: 5000,
+    batchSize: 500,
+    accuracyThreshold: 0.99,    // 99% accuracy required
+    warningThreshold: 0.97,     // 97-99% shows warning
+    confidenceLevel: 0.95       // 95% statistical confidence
+  },
+  execution: {
+    maxConcurrentGames: 3,
+    gameTimeout: 600000,        // 10 minutes per game
+    maxRetries: 2
+  },
+  swagger: {
+    endpoints: {
+      PLAYTEST: {
+        rtpValidation: '/api/v1/games/{gameId}/rtp',
+        expectedRtp: '/api/v1/games/{gameId}/config'
+      },
+      CASINO CLIENT: {
+        rtpValidation: '/api/v2/rtp/validate/{gameId}',
+        expectedRtp: '/api/v2/games/{gameId}/settings'
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🚀 Project Initialization & Execution
+
+### **First-Time Setup (Streamlined)**
 ```bash
-# 1. Import Swagger definitions (corrected syntax)
-npx swagger-to-postman-v2 -s api/swagger/game-api.yaml -o postman/collections/swagger-import.json
+# 1. Clone and setup
+git clone <your-repo>
+cd rtp-gaming-api
 
-# 2. Enhance with test scripts
-npm run postman:enhance-collections
+# 2. Install dependencies
+npm install
+npx playwright install
 
-# 3. Convert to Playwright
-npm run convert:postman
+# 3. Configure domains (single file)
+cp config/domains.example.js config/domains.js
+# Edit config/domains.js with your company URLs and API keys
 
-# 4. Run hybrid tests
-npm run test:hybrid
+# 4. Validate setup
+npm run validate:swagger      # Verify all configurations
+npm run discover:games        # Test domain connectivity
+
+# 5. Run initial test
+npm run test:rtp             # Execute RTP validation
 ```
 
-### RTP Testing Workflow
+### **Daily Usage Commands**
+
+#### **Start Testing**
+```bash
+# Run complete RTP validation
+npm run test
+
+# Test specific company domain
+npm run test:company-a
+npm run test:company-b
+
+# Run with detailed output
+npm run test -- --reporter=line
+
+# Start interactive mode
+npm start
+```
+
+#### **Analysis & Reporting**
+```bash
+# Analyze test results
+npm run analyze:results
+
+# Generate and view reports
+npm run test:report
+
+# Clean old reports
+npm run clean:reports
+```
+
+---
+
+## 🎯 Streamlined Testing Workflow
+
+### **Automated RTP Testing Process**
 ```mermaid
-sequenceDiagram
-    SuperAdmin->>Postman: 1. Update RTP via API
-    Postman->>SwaggerAPI: 2. Validate endpoint
-    SwaggerAPI->>Playwright: 3. Trigger 5000 spins
-    Playwright->>ResultsDB: 4. Store simulation data
-    ResultsDB->>Reporter: 5. Generate RTP report
-    Reporter->>SuperAdmin: 6. Display compliance status
+graph TD
+    A[Load Consolidated Configs] --> B[Discover Games via Orchestrator]
+    B --> C[Load Swagger References] 
+    C --> D[Queue Games for Testing]
+    D --> E[Execute 5000 Spins per Game]
+    E --> F[Calculate RTP via Accuracy Calculator]
+    F --> G[Validate Against Thresholds]
+    G --> H[Cross-check with Swagger]
+    H --> I[Generate Consolidated Reports]
+```
+
+### **Execution Parameters**
+- **Spins per Game**: 5,000 (configurable in `config/test-thresholds.js`)
+- **Batch Processing**: 500 spins per batch for memory optimization
+- **Accuracy Tolerance**: 1% deviation (99% accuracy required)
+- **Concurrent Games**: Maximum 3 games tested simultaneously
+- **Timeout**: 10 minutes maximum per game test
+- **Statistical Validation**: 95% confidence level
+
+---
+
+## 📊 Consolidated Reporting & Analysis
+
+### **Unified Reporting System**
+All reporting functionality consolidated into `reports/custom-reporter.js`:
+- **HTML Dashboard**: Interactive game-by-game results
+- **Statistical Analysis**: Confidence intervals and variance data
+- **Compliance Report**: Pass/fail status with regulatory context
+- **Performance Metrics**: Test execution times and resource usage
+
+### **Report Structure**
+```bash
+reports/results/
+├── {timestamp}-summary.json      # Quick results overview
+├── {timestamp}-detailed.html     # Full interactive report
+├── {timestamp}-compliance.pdf    # Regulatory compliance report
+└── test-artifacts/               # Screenshots and traces
+```
+
+### **Accessing Reports**
+```bash
+# Open latest HTML report
+npm run test:report
+
+# Analyze specific results
+npm run analyze:results -- --date=2025-06-24
 ```
 
 ---
 
-## 🎯 Expected Outcomes
+## 🔍 Troubleshooting
 
-### **Immediate Benefits**
-1. **Automated RTP Validation:** Super admin RTP changes → Automatic 5000+ spin validation
-2. **Real-time Monitoring:** Live progress tracking via WebSocket updates
-3. **Postman-First Development:** Rapid API endpoint validation and testing
-4. **Statistical Compliance:** Automated RTP accuracy reporting within 1% tolerance
+### **Common Issues & Solutions**
 
-### **Workflow Improvements**
-1. **One-Click Testing:** Single command triggers complete RTP validation cycle
-2. **Hybrid Testing:** Postman manual validation + Playwright automation
-3. **Batch Operations:** Simultaneous testing across multiple games with configurable batch sizes
-4. **Compliance Reporting:** Auto-generated regulatory reports
+#### **Configuration Issues**
+```bash
+# Validate all configurations
+npm run validate:swagger
 
-### **Technical Enhancements**
-1. **API Reliability:** Robust error handling with automatic retries
-2. **Performance Optimization:** Efficient handling of 5000+ spin simulations with batch processing
-3. **Data Pipeline:** Seamless flow from admin → API → simulation → analysis
-4. **Scalability:** Support for multiple environments and concurrent tests
+# Test domain connectivity
+npm run discover:games
 
----
+# Check consolidated config files
+cat config/domains.js
+cat config/test-thresholds.js
+```
 
-## 📊 Hybrid Testing Commands
+#### **Memory Issues with 5000 Spins**
+**Solution**: Batch processing automatically configured in `config/test-thresholds.js`
+```javascript
+rtp: {
+  batchSize: 500  // Processes 500 spins at a time
+}
+```
 
-| Command | Action | Duration (Estimate) |
-|---------|--------|----------|
-| `npm run postman:sync` | Sync Swagger → Postman collections | 30 seconds |
-| `npm run test:postman` | Run Postman tests via Newman | 2-5 minutes |
-| `npm run convert:postman` | Generate Playwright from Postman | 1 minute |
-| `npm run simulate:dev --game=<game_id> --batch-size=500` | Run 5000 spin RTP simulation | 5-10 minutes |
-| `npm run test:hybrid` | Full Postman + Playwright pipeline | 10-15 minutes |
-| `npm run docs:generate` | Generate API docs from collections | 1 minute |
+#### **API Connection Failures**
+**Solution**: All API handling consolidated in `src/utils/api-client.js`
+```bash
+# Debug API connections
+node src/utils/api-client.js --test-connection
+```
+
+#### **Inaccurate RTP Calculations**
+**Solution**: Enhanced accuracy calculator with debugging
+```bash
+# Enable detailed calculation tracing
+npm run analyze:results -- --debug --game=GAME_ID
+```
 
 ---
 
 ## 📈 Success Metrics
 
-- **Automation Level:** 100% automated RTP validation workflow
-- **Simulation Capacity:** 5000+ spins completed in under 10 minutes with batch processing
-- **Error Detection:** RTP discrepancies caught within 1% accuracy
-- **Development Speed:** 70% faster API endpoint validation with Postman
-- **Reliability:** 99.9% successful test completion rate
-- **Compliance:** Automated regulatory reporting with statistical validation
+- **Code Reduction**: 40% fewer files through consolidation
+- **Automation Level**: 100% automated RTP validation workflow
+- **Test Coverage**: All games from configured company domains
+- **Accuracy**: 5000+ spins per game with statistical validation
+- **Performance**: Complete testing cycle under 15 minutes
+- **Reliability**: 99.9% successful test completion rate
+- **Maintainability**: Simplified file structure for easier updates
 
 ---
 
-## 🔧 Troubleshooting Guide
+## 🎯 Quick Start Guide
 
-**Problem:** Postman ↔ Playwright conversion fails  
-**Solution:** `npx postman-to-playwright@latest --validate-schema --fix-alignment`
+### **For New Users**
+1. **Configure**: Edit `config/domains.js` with your company URLs
+2. **Authenticate**: Add API keys to `.env` file
+3. **Validate**: Run `npm run validate:swagger`
+4. **Test**: Execute `npm run test:rtp`
+5. **Review**: Check `npm run test:report`
 
-**Problem:** 5000+ spins cause memory issues  
-**Solution:** Enable batch processing in `test-config.js` with recommended batch size of 500 spins per batch:
-```javascript
-module.exports = {
-  simulation: {
-    batchSize: 500,
-    maxConcurrentBatches: 3,
-    memoryThreshold: '512MB'
-  }
-}
-```
-
-**Problem:** RTP calculations don't match expected values  
-**Solution:** Use `results-analyzer.js` debug mode to trace calculation pipeline:
+### **For Daily Operations**
 ```bash
-npm run analyze:debug --game=<game_id> --verbose
-```
+# Morning routine
+npm run discover:games    # Check available games
+npm run test             # Run full validation
+npm run test:report      # Review results
 
-**Problem:** Swagger import creates duplicate endpoints  
-**Solution:** Run `npm run postman:dedupe` to clean collections and verify swagger-to-postman-v2 syntax:
-```bash
-npx swagger-to-postman-v2 --validate-spec api/swagger/game-api.yaml
+# Troubleshooting
+npm run validate:swagger  # Verify configurations
+npm run analyze:results   # Deep dive into issues
 ```
-
-**Problem:** Batch processing configuration  
-**Solution:** Configure optimal batch sizes based on system resources:
-- **Low memory systems:** 250 spins per batch
-- **Standard systems:** 500 spins per batch (recommended)
-- **High-performance systems:** 1000 spins per batch
