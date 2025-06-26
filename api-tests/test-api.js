@@ -1,7 +1,7 @@
 // test-api.js
 require('dotenv').config();
 const axios = require('axios');
-const config = require('./config/domains');
+const config = require('../config/domains');
 
 async function testEndpoint(company) {
   const { baseUrl, gameListEndpoint, headers } = config[company];
