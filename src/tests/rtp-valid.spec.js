@@ -1,11 +1,13 @@
 // tests/rtp-valid.spec.js
-// This file runs RTP validation for games, now supporting multiple authenticated platforms.
+// This file runs RTP validation for games, now supporting multiple authenticated platforms,
+// fetching games via API, and includes placeholders for actual game play automation.
 
-const { test, expect } = require('@playwright/test');
-const { calculateRTP } = require('../utils/accuracy-calc'); // Assuming path from RTP/tests
-const { log, logError } = require('../utils/logger');     // Assuming path from RTP/tests
-const domainsConfig = require('../config/domains');       // Assuming path from RTP/tests
-const thresholds = require('../config/test-thresholds');  // Assuming path from RTP/tests
+import { test, expect } from '@playwright/test';
+// Ensure all local imports have .js extension for ES Module compatibility
+import { calculateRTP } from '../utils/accuracy-calc.js'; 
+import { log, logError } from '../utils/logger.js';     
+import domainsConfig from '../config/domains.js';       // Import as default
+import thresholds from '../config/test-thresholds.js';  // Assuming this file also exports default
 
 // Use test.describe.configure() for common settings for the whole test file
 test.describe.configure({ mode: 'parallel' }); // Run tests in parallel across projects/files
@@ -14,12 +16,11 @@ test.describe('RTP Validation Suite', () => {
 
   // The 'project' fixture tells us which Playwright project (e.g., 'playtest', 'casinoclient')
   // is currently running this test file.
+  // We include 'page' for browser interaction and 'request' for API calls.
   test(`Validate games RTP for current platform`, async ({ request, page }, testInfo) => {
-    // Get the current company key from the project name
     const companyKey = testInfo.project.name; 
     const companyConfig = domainsConfig[companyKey];
 
-    // Skip if no configuration found for this project name
     if (!companyConfig) {
       logError(new Error(`No domain configuration found for project: ${companyKey}`), 'RTP Validation Suite');
       test.skip(`Skipping test: No configuration for project ${companyKey}`);
@@ -33,15 +34,18 @@ test.describe('RTP Validation Suite', () => {
     try {
       await test.step(`Fetch games for ${companyConfig.companyName} via authenticated API`, async () => {
         const { apiBaseUrl, gameListEndpoint, headers, validation } = companyConfig;
-        const fullUrl = `${apiBaseUrl}${gameListEndpoint}`;
+        const fullApiUrl = `${apiBaseUrl}${gameListEndpoint}`;
 
-        log(`Attempting to fetch games from: ${fullUrl} for ${companyConfig.companyName} (authenticated)`, 'info');
+        log(`Attempting to fetch games from API: ${fullApiUrl} for ${companyConfig.companyName} (authenticated)`, 'info');
 
         // Use Playwright's request fixture for authenticated API call.
         // It automatically uses the 'storageState' loaded by the current project.
-        const response = await request.get(fullUrl, {
+        const response = await request.get(fullApiUrl, {
           headers: {
             ...headers, // Include any platform-specific headers from domainsConfig
+            // If your API requires a specific Authorization header (e.g., Bearer token),
+            // you'd need to extract that token during login (if available in a response or local storage)
+            // and pass it here. For cookie-based auth handled by storageState, this might not be needed.
           },
           timeout: validation.timeout,
         });
@@ -49,7 +53,7 @@ test.describe('RTP Validation Suite', () => {
         // Log full response for debugging if status is not OK
         if (!response.ok()) {
             const errorBody = await response.text();
-            console.error(`API response was not OK (${response.status()}) for ${fullUrl}: ${errorBody}`);
+            console.error(`API response was not OK (${response.status()}) for ${fullApiUrl}: ${errorBody}`);
             throw new Error(`API failed to return OK status: ${response.status()} - ${errorBody}`);
         }
 
@@ -59,14 +63,15 @@ test.describe('RTP Validation Suite', () => {
         log(`Full response from game list API for ${companyConfig.companyName}: ${JSON.stringify(responseData, null, 2)}`, 'debug');
 
         // --- IMPORTANT: Adjust this game extraction logic based on YOUR API's ACTUAL response structure ---
+        // This is the part that needs to correctly parse the JSON you get from the API.
         if (responseData && responseData.games) {
-          games = responseData.games;
+          games = responseData.games; // If response is { games: [...] }
         } else if (Array.isArray(responseData)) {
-          games = responseData;
+          games = responseData; // If response is directly [...]
         } else if (responseData.data && Array.isArray(responseData.data)) {
-          games = responseData.data;
+          games = responseData.data; // If response is { data: [...] }
         } else {
-          const errorMsg = `Invalid games response format for ${companyConfig.companyName}. Received: ${JSON.stringify(responseData, null, 2)}`;
+          const errorMsg = `Invalid games response format for ${companyConfig.companyName}. API Response: ${JSON.stringify(responseData, null, 2)}`;
           logError(new Error(errorMsg), `getGames for ${companyConfig.companyName}`);
           throw new Error(errorMsg); // Re-throw to fail the step
         }
@@ -88,53 +93,67 @@ test.describe('RTP Validation Suite', () => {
         description: `Failed to fetch games: ${error.message}`
       });
       
+      // Skip the test if API fetching fails critically (e.g., 404, timeout, auth)
       if (error.message.includes('404')) {
         test.skip(`Skipping ${companyConfig.companyName} - API endpoint not found (404). Check configuration.`);
       } else if (error.message.includes('timeout')) {
         test.skip(`Skipping ${companyConfig.companyName} - API timeout. Service may be unavailable.`);
+      } else if (error.message.includes('status: 401') || error.message.includes('status: 403')) { // Common auth errors
+        test.skip(`Skipping ${companyConfig.companyName} - API authentication failed.`);
       } else {
-        throw error;
+        throw error; // Re-throw other unexpected errors
       }
     }
     
-    // Test first N games as per RTP_BATCH_SIZE or a fixed number for demo
-    const gamesToTestCount = parseInt(process.env.RTP_BATCH_SIZE) || 2; // Use RTP_BATCH_SIZE for count, default to 2
-    const gamesToTest = games.slice(0, Math.min(gamesToTestCount, games.length));
+    // Determine how many games to test (e.g., from env or config, or limited for quick runs)
+    const numberOfGamesToTest = parseInt(process.env.TEST_GAME_COUNT || '2'); // Default to 2 games for quick runs
+    const gamesToTest = games.slice(0, Math.min(numberOfGamesToTest, games.length));
 
-    // Iterate through games fetched from the API
+    // Iterate through games fetched from the API and play them
     for (const game of gamesToTest) {
       await test.step(`Validate RTP for ${companyConfig.companyName} - ${game.name || game.id} (${game.id})`, async () => {
         try {
-          log(`Starting RTP validation for ${companyConfig.companyName} - ${game.name || game.id} with ${thresholds.rtp.spinsPerGame} spins`, 'info');
+          const totalSpins = thresholds.rtp.spinsPerGame || 1000;
+          log(`Starting RTP validation for ${companyConfig.companyName} - ${game.name || game.id} with ${totalSpins} spins`, 'info');
 
-          // Construct the game URL. Adjust this based on how your games are accessed.
-          // Example: https://platform.com/games/game_id or https://platform.com/launch?gameId=game_id
-          const gamePageUrl = `${companyConfig.gameBaseUrl}/games/${game.id}`; // Common pattern, adjust as needed
-
-          // Navigate to the game page. Playwright's 'page' fixture will use the authenticated context.
+          // Construct the game URL. This is crucial and depends on your platform's URL structure.
+          // Example: https://platform.com/games/game_id or https://platform.com/launch?gameId=${game.id}
+          // Make sure 'game.id', 'game.slug', or 'game.code' matches the property from your API response
+          const gamePageUrl = `${companyConfig.gameBaseUrl}/games/${game.id || game.slug || game.code}`; 
+          
+          log(`Navigating to game URL: ${gamePageUrl}`);
           await page.goto(gamePageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 }); // Increase timeout if games load slowly
 
-          // You might want to add assertions here to ensure the game loaded successfully
-          await expect(page.locator('body')).not.toContainText('Error'); // Example: Check for error messages
+          // Optional: Add assertions to ensure the game loaded successfully
+          await expect(page.locator('body')).not.toContainText('Error', { timeout: 10000 }); // Check for "Error" on the page
+          await page.screenshot({ path: path.join(debugScreenshotDir, `${companyKey}-${game.id}-game-loaded.png`) });
 
           const results = [];
-          const betAmount = 1; // Example fixed bet amount
+          const betAmount = 1; // Example fixed bet amount. You might get this from config or game UI.
 
-          // --- IMPORTANT: Replace this loop with actual Playwright UI interaction for each spin ---
-          // This is the core of your game testing automation.
-          for (let i = 0; i < (thresholds.rtp.spinsPerGame || 1000); i++) { // Default to 1000 spins if not set
+          // --- IMPORTANT: REPLACE THIS LOOP WITH YOUR ACTUAL PLAYWRIGHT UI INTERACTION FOR EACH SPIN ---
+          // This is the core automation for playing the game.
+          for (let i = 0; i < totalSpins; i++) {
               // Example Playwright actions:
-              // await page.click('#betButton'); // Click bet button
-              // await page.waitForTimeout(500); // Wait for bet to register
-              // await page.click('#spinButton'); // Click spin button
-              // await page.waitForSelector('.win-amount-display', { state: 'visible', timeout: 10000 }); // Wait for result display
-              // const win = parseFloat(await page.textContent('.win-amount-display')); // Get win amount
-              // results.push({ bet: betAmount, win: win });
+              // 1. Wait for a "Spin" or "Bet" button to be enabled:
+              //    await page.waitForSelector('#spinButton:not([disabled])', { timeout: 10000 });
+              // 2. Click the bet amount selector (if variable bets):
+              //    await page.click(`#betAmount_${betAmount}`);
+              // 3. Click the "Spin" button:
+              //    await page.click('#spinButton');
+              // 4. Wait for the game animation to complete or results to appear:
+              //    await page.waitForSelector('.win-amount-display', { state: 'visible', timeout: 15000 });
+              // 5. Extract bet and win amounts from the UI:
+              //    const currentBet = parseFloat(await page.textContent('#currentBetDisplay'));
+              //    const winAmount = parseFloat(await page.textContent('.win-display'));
+              //    results.push({ bet: currentBet, win: winAmount });
+              // 6. Add small delays if needed to simulate human interaction or avoid overwhelming the game:
+              //    await page.waitForTimeout(500);
 
-              // For now, continue simulating spins for demonstration
-              const simulatedWin = Math.random() > 0.5 ? betAmount * 1.5 : 0;
+              // For now, continue simulating spins for demonstration:
+              const simulatedWin = Math.random() > 0.5 ? betAmount * 1.5 : 0; // Simple win/loss simulation
               results.push({ bet: betAmount, win: simulatedWin });
-              await page.waitForTimeout(50); // Small delay
+              await page.waitForTimeout(50); // Small delay to simulate game
           }
           // --- End of Playwright UI interaction ---
           
@@ -175,4 +194,3 @@ test.describe('RTP Validation Suite', () => {
     } // End of for...of gamesToTest
   }); // End of test
 }); // End of describe
-

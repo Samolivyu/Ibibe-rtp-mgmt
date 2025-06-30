@@ -1089,3 +1089,46 @@ Error: Failed to get games for casinoclient: Invalid games response format - no 
 [2025-06-26T09:14:09.012Z] Fetching games from: https://casino.client.ibibe.africa/api/v1/all/games
 [2025-06-26T09:35:53.607Z] Created rate-limited client for playtest (10 req/sec)
 [2025-06-26T09:35:53.609Z] Created rate-limited client for casinoclient (15 req/sec)
+[2025-06-30T13:40:37.748Z] Created rate-limited client for playtest (5 req/sec)
+[2025-06-30T13:40:37.750Z] Created rate-limited client for casinoclient (10 req/sec)
+[2025-06-30T13:40:37.751Z] Starting RTP Validation Engine
+[2025-06-30T13:40:37.751Z] Verifying DNS for example.com
+[2025-06-30T13:40:37.996Z] DNS resolved example.com to 23.192.228.84
+[2025-06-30T13:40:37.998Z] Verifying DNS for example.com
+[2025-06-30T13:40:38.006Z] DNS resolved example.com to 23.215.0.138
+[2025-06-30T13:40:38.007Z] Starting validation for playtest
+[2025-06-30T13:40:38.009Z] Fetching games from: https://example.com/games
+[2025-06-30T13:40:39.729Z] getGames for playtest: undefined
+undefined
+[2025-06-30T13:43:39.163Z] Created rate-limited client for playtest (5 req/sec)
+[2025-06-30T13:43:39.167Z] Created rate-limited client for casinoclient (10 req/sec)
+[2025-06-30T13:43:39.167Z] Starting RTP Validation Engine
+[2025-06-30T13:43:39.167Z] Verifying DNS for playgamestest.ibibe.cloud
+[2025-06-30T13:43:39.652Z] DNS resolved playgamestest.ibibe.cloud to 3.175.179.121
+[2025-06-30T13:43:39.654Z] Verifying DNS for casino.client.ibibe.africa
+[2025-06-30T13:43:39.674Z] DNS resolved casino.client.ibibe.africa to 159.89.235.166
+[2025-06-30T13:43:39.676Z] Starting validation for playtest
+[2025-06-30T13:43:39.678Z] Fetching games from: https://playgamestest.ibibe.cloud/game-view/games
+[2025-06-30T13:43:40.870Z] getGames for playtest: undefined
+undefined
+[2025-06-30T13:44:45.879Z] Created rate-limited client for playtest (5 req/sec)
+[2025-06-30T13:44:45.881Z] Created rate-limited client for casinoclient (10 req/sec)
+[2025-06-30T13:44:45.882Z] Starting RTP Validation Engine
+[2025-06-30T13:44:45.882Z] Verifying DNS for admin-api.ibibe.africa
+[2025-06-30T13:44:46.556Z] DNS resolved admin-api.ibibe.africa to 52.90.88.64
+[2025-06-30T13:44:46.558Z] Verifying DNS for admin-api3.ibibe.africa
+[2025-06-30T13:44:46.891Z] DNS resolved admin-api3.ibibe.africa to 159.89.235.166
+[2025-06-30T13:44:46.892Z] Starting validation for playtest
+[2025-06-30T13:44:46.894Z] Fetching games from: https://admin-api.ibibe.africa/games
+[2025-06-30T13:44:47.878Z] getGames for playtest: undefined
+undefined
+[2025-06-30T13:56:56.556Z] Created rate-limited client for playtest (5 req/sec)
+[2025-06-30T13:56:56.560Z] Created rate-limited client for casinoclient (10 req/sec)
+[2025-06-30T13:56:56.560Z] Starting RTP Validation Engine
+[2025-06-30T13:56:56.561Z] Verifying DNS for admin-api.ibibe.africa
+[2025-06-30T13:56:56.586Z] DNS resolved admin-api.ibibe.africa to 52.90.88.64
+[2025-06-30T13:56:56.587Z] Verifying DNS for admin-api3.ibibe.africa
+[2025-06-30T13:56:56.606Z] DNS resolved admin-api3.ibibe.africa to 159.89.235.166
+[2025-06-30T13:56:56.608Z] Starting validation for playtest
+[2025-06-30T13:56:56.609Z] Fetching games from: https://admin-api.ibibe.africa/api/v1/games
+[2025-06-30T13:56:58.530Z] Response status: 200

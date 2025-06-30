@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const { log, logError } = require('../utils/logger');
+import fs from 'fs';
+import path from 'path';
+import { log, logError } from '../utils/logger.js';
 
 class CustomReporter {
   onBegin(config, suite) {
@@ -45,4 +45,5 @@ class CustomReporter {
   }
 }
 
-module.exports = CustomReporter;
+// Export the CustomReporter class as the default export
+export default CustomReporter;

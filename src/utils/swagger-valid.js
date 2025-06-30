@@ -1,18 +1,17 @@
-const yaml = require('js-yaml');
-const axios = require('axios');
-const path = require('path');
-const fs = require('fs');
-const thresholds = require('../../config/test-thresholds');
-const { log, logError } = require('./logger');
+import yaml from 'js-yaml';
+import axios from 'axios';
+import path from 'path';
+import fs from 'fs';
+import thresholds from '../../config/test-thresholds.js';
+import { log, logError } from './logger.js';
+
 const SWAGGER_FILE_MAP = {
   playtest: 'dev.yaml',
   casinoclient: 'test.yaml'
 };
 
-
-module.exports = {
-  async loadSwaggerSpec(company) {
-    try {
+export async function loadSwaggerSpec(company) {
+  try {
     // Use environment variable if available
     const envVar = `SWAGGER_URL_${company.toUpperCase()}`;
     const swaggerUrl = process.env[envVar];
@@ -40,53 +39,49 @@ module.exports = {
     logError(error, `loadSwaggerSpec for ${company}`);
     throw new Error(`Failed to load Swagger spec for ${company}: ${error.message}`);
   }
-  },
+}
 
-  async validateSwagger(company, gameId, calculatedRTP) {
-    try {
-      const swagger = await this.loadSwaggerSpec(company);
-      const endpointPath = thresholds.swagger.endpoints[company].expectedRtp
-        .replace('{gameId}', gameId);
-      
-      const expectedRTP = this.findExpectedRTP(swagger, endpointPath);
-      if (expectedRTP === undefined) {
-        log(`Expected RTP not found for ${gameId} in Swagger`, 'warn');
-        return false;
-      }
-      
-      const difference = Math.abs(calculatedRTP - expectedRTP);
-      const isValid = difference <= (1 - thresholds.rtp.accuracyThreshold);
-      
-      log(`Swagger validation for ${gameId}: ${isValid ? 'PASS' : 'FAIL'} ` +
-          `(Expected: ${expectedRTP}, Actual: ${calculatedRTP.toFixed(4)})`, 
-          isValid ? 'success' : 'error');
-          
-      return isValid;
-    } catch (error) {
-      logError(error, 'Swagger validation');
+export async function validateSwagger(company, gameId, calculatedRTP) {
+  try {
+    const swagger = await loadSwaggerSpec(company);
+    const endpointPath = thresholds.swagger.endpoints[company].expectedRtp
+      .replace('{gameId}', gameId);
+    
+    const expectedRTP = findExpectedRTP(swagger, endpointPath);
+    if (expectedRTP === undefined) {
+      log(`Expected RTP not found for ${gameId} in Swagger`, 'warn');
       return false;
     }
-  },
-  
-  
-  findExpectedRTP(swagger, path) {
-    // Improved traversal for nested Swagger structures
-    const traverse = (obj) => {
-      if (obj && typeof obj === 'object') {
-        if (obj.example && obj.example.rtp) return obj.example.rtp;
-        if (obj['x-rtp']) return obj['x-rtp'];
-        
-        for (const key in obj) {
-          const result = traverse(obj[key]);
-          if (result !== undefined) return result;
-        }
-      }
-      return undefined;
-    };
     
-    const endpoint = swagger.paths[path]?.get?.responses?.['200']?.content?.['application/json']?.schema;
-    return traverse(endpoint);
+    const difference = Math.abs(calculatedRTP - expectedRTP);
+    const isValid = difference <= (1 - thresholds.rtp.accuracyThreshold);
+    
+    log(`Swagger validation for ${gameId}: ${isValid ? 'PASS' : 'FAIL'} ` +
+        `(Expected: ${expectedRTP}, Actual: ${calculatedRTP.toFixed(4)})`, 
+        isValid ? 'success' : 'error');
+        
+    return isValid;
+  } catch (error) {
+    logError(error, 'Swagger validation');
+    return false;
   }
-};
+}
 
-
+export function findExpectedRTP(swagger, path) {
+  // Improved traversal for nested Swagger structures
+  const traverse = (obj) => {
+    if (obj && typeof obj === 'object') {
+      if (obj.example && obj.example.rtp) return obj.example.rtp;
+      if (obj['x-rtp']) return obj['x-rtp'];
+      
+      for (const key in obj) {
+        const result = traverse(obj[key]);
+        if (result !== undefined) return result;
+      }
+    }
+    return undefined;
+  };
+  
+  const endpoint = swagger.paths[path]?.get?.responses?.['200']?.content?.['application/json']?.schema;
+  return traverse(endpoint);
+}

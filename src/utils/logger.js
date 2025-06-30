@@ -1,8 +1,8 @@
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
+import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 
-const logDir = path.join(__dirname, '../../logs');
+const logDir = path.join(new URL('.', import.meta.url).pathname, '../../logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
@@ -33,4 +33,5 @@ const logError = (error, context) => {
   log(message, 'error');
 };
 
-module.exports = { log, logError };
+// Export the log and logError functions
+export { log, logError };

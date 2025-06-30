@@ -2,6 +2,7 @@
   "name": "api-component",
   "version": "1.0.0",
   "description": "API testing, simulation, and integration layer for gaming applications.",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node src/app.js",
@@ -19,7 +20,7 @@
     "axios-rate-limit": "^1.4.0",
     "chalk": "^4.1.2",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "js-yaml": "^4.1.0",
     "mathjs": "^14.5.2",
     "node-fetch": "^2.7.0",

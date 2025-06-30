@@ -1,18 +1,24 @@
 // playwright.config.js
-const { defineConfig, devices } = require('@playwright/test');
-const path = require('path');
+import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url'; // Needed for __dirname equivalent in ES Modules
+
+// __dirname equivalent for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import the domains configuration to dynamically create projects
-const domainsConfig = require('./config/domains'); // Adjust path if needed
+import domainsConfig from './config/domains.js'; // Ensure domains.js is an ES Module and has .js extension
 
-// Define the path to your global setup/teardown files
-const globalSetupPath = require.resolve('./playwright-globe-setup');
-const globalTeardownPath = require.resolve('./playwright-globe-teardown');
+// Define the path to your global setup/teardown files as strings
+const globalSetupPath = path.resolve(__dirname, './playwright-globe-setup.js');
+const globalTeardownPath = path.resolve(__dirname, './playwright-globe-teardown.js'); // Assuming this file exists and exports default
 
-module.exports = defineConfig({
+
+export default defineConfig({
   // Global setup to authenticate across platforms
-  globalSetup: globalSetupPath,
-  globalTeardown: globalTeardownPath,
+  globalSetup: globalSetupPath, // Pass the string path
+  globalTeardown: globalTeardownPath, // Pass the string path
 
   // Directory where your Playwright tests are located
   testDir: './tests', // Assumes your tests are under RTP/tests

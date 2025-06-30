@@ -1,66 +1,60 @@
-// Load environment variables
-const dotenv = require('dotenv');
-const path = require('path');
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// __dirname equivalent for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const domainsConfig = {
-    // Configuration for the "PLAY TEST" platform
-    playtest: {
-        companyName: "Play Test Platform",
-        // Login details for Playwright's global setup to authenticate
-        loginUrl: process.env.PLAY_TEST_LOGIN_URL,
-        username: process.env.PLAY_TEST_USERNAME, // Directly use env var here
-        password: process.env.PLAY_TEST_PASSWORD, // Directly use env var here
-
-        // API details for fetching game list (used by rtp-valid.spec.js via Playwright's 'request')
-        apiBaseUrl: process.env.PLAY_TEST_API_BASE_URL,
-        gameListEndpoint: '/api/v1/games', // Common endpoint, adjust if different
-        // Headers for API calls (e.g., if a static API key is needed)
-        headers: {
-            'Accept': 'application/json',
-            // 'X-API-Key': process.env.PLAY_TEST_API_KEY // Example: if API uses a fixed key
-        },
-        // Validation rules for API responses
-        validation: {
-            timeout: 10000, // Timeout for API calls
-            expectedStatusCodes: [200] // Expected HTTP status codes for success
-        },
-        // Base URL for launching individual games in the browser via Playwright
-        gameBaseUrl: process.env.PLAY_TEST_GAME_BASE_URL,
+  playtest: {
+    // Base URL for game platform
+    baseUrl: process.env.PLAY_TEST_BASE_URL || 'https://admin-api.ibibe.africa',
+    // Endpoint to fetch the game list
+    gameListEndpoint: process.env.PLAY_TEST_GAME_LIST_ENDPOINT || '/games',
+    // Optional headers (e.g. API keys, auth tokens)
+    headers: {
+      Accept: 'application/json',
+      // 'X-API-Key': process.env.PLAY_TEST_API_KEY,
+      // Add other headers here
     },
-    // Configuration for the "CASINO CLIENT" platform
-    casinoclient: {
-        companyName: "Casino Client Platform",
-        loginUrl: process.env.CASINO_CLIENT_LOGIN_URL,
-        username: process.env.CASINO_CLIENT_USERNAME,
-        password: process.env.CASINO_CLIENT_PASSWORD,
-
-        apiBaseUrl: process.env.CASINO_CLIENT_API_BASE_URL,
-        gameListEndpoint: '/api/v1/games', // Common endpoint, adjust if different
-        headers: {
-            'Accept': 'application/json',
-            // 'X-API-Key': process.env.CASINO_CLIENT_API_KEY
-        },
-        validation: {
-            timeout: 10000,
-            expectedStatusCodes: [200]
-        },
-        gameBaseUrl: process.env.CASINO_CLIENT_GAME_BASE_URL,
+    // Validation rules for responses
+    validation: {
+      timeout: Number(process.env.PLAY_TEST_TIMEOUT) || 10000,
+      expectedStatusCodes: (process.env.PLAY_TEST_STATUS_CODES
+        ? process.env.PLAY_TEST_STATUS_CODES.split(',').map(Number)
+        : [200]
+      ),
     },
-    // Add more companies/platforms here following the same structure
-    // Example:
-    // anotherPlatform: {
-    //     companyName: "Another Gaming Platform",
-    //     loginUrl: process.env.ANOTHER_PLATFORM_LOGIN_URL,
-    //     username: process.env.ANOTHER_PLATFORM_USERNAME,
-    //     password: process.env.ANOTHER_PLATFORM_PASSWORD,
-    //     apiBaseUrl: process.env.ANOTHER_PLATFORM_API_BASE_URL,
-    //     gameListEndpoint: '/api/games',
-    //     headers: { 'Accept': 'application/json' },
-    //     validation: { timeout: 15000, expectedStatusCodes: [200, 201] },
-    //     gameBaseUrl: process.env.ANOTHER_PLATFORM_GAME_BASE_URL,
-    // },
+    // Rate limit settings
+    rateLimit: {
+      requestsPerSecond: Number(process.env.PLAY_TEST_RPS) || 5,
+    },
+  },
+
+  casinoclient: {
+    baseUrl: process.env.CASINO_CLIENT_BASE_URL || 'https://admin-api3.ibibe.africa',
+    gameListEndpoint: process.env.CASINO_CLIENT_GAME_LIST_ENDPOINT || '/games',
+    headers: {
+      Accept: 'application/json',
+      // 'X-API-Key': process.env.CASINO_CLIENT_API_KEY,
+    },
+    validation: {
+      timeout: Number(process.env.CASINO_CLIENT_TIMEOUT) || 10000,
+      expectedStatusCodes: (process.env.CASINO_CLIENT_STATUS_CODES
+        ? process.env.CASINO_CLIENT_STATUS_CODES.split(',').map(Number)
+        : [200]
+      ),
+    },
+    rateLimit: {
+      requestsPerSecond: Number(process.env.CASINO_CLIENT_RPS) || 10,
+    },
+  },
+
+  // Add additional platforms here...
 };
 
-module.exports = domainsConfig;
+export default domainsConfig;

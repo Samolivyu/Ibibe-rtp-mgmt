@@ -1,34 +1,29 @@
-// test-api.js
-require('dotenv').config();
-const axios = require('axios');
-const config = require('../config/domains');
-
-async function testEndpoint(company) {
-  const { baseUrl, gameListEndpoint, headers } = config[company];
-  const url = `${baseUrl}${gameListEndpoint}`;
-  
-  console.log(`Testing ${company} endpoint: ${url}`);
-  
-  try {
-    const response = await axios.get(url, {
-      headers,
-      timeout: 5000,
-      validateStatus: () => true // Don't throw on non-200 status
-    });
-    
-    console.log(`Status: ${response.status}`);
-    console.log('Headers:', response.headers);
-    console.log('Response:', response.data);
-  } catch (error) {
-    console.error('Error:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
+const thresholds = {
+  rtp: {
+    spinsPerGame: process.env.RTP_TEST_SPINS || 5000,
+    batchSize: process.env.RTP_BATCH_SIZE || 500,
+    accuracyThreshold: 0.99,
+    warningThreshold: 0.97,
+    confidenceLevel: 0.95
+  },
+  execution: {
+    maxConcurrentGames: 3,
+    gameTimeout: 600000,
+    maxRetries: 2
+  },
+  swagger: {
+    endpoints: {
+      playtest: {
+        rtpValidation: '/api/v1/games/{gameId}/rtp',
+        expectedRtp: '/operator-proxy/get-user-rtp'
+      },
+      casinoclient: {
+        rtpValidation: '/api/v1/player-rtp-config/{playerId}',
+        expectedRtp: '/api/v1/player-rtp-config/'
+      }
     }
   }
-}
+};
 
-// Test both endpoints
-testEndpoint('playtest')
-  .then(() => testEndpoint('casinoclient'))
-  .catch(console.error);
+// Export the thresholds object as the default export
+export default thresholds;

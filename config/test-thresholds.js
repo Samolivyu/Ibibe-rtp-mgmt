@@ -1,5 +1,4 @@
-// config/test.thresholds.js
-module.exports = {
+const thresholds = {
   rtp: {
     spinsPerGame: process.env.RTP_TEST_SPINS || 5000,
     batchSize: process.env.RTP_BATCH_SIZE || 500,
@@ -26,3 +25,5 @@ module.exports = {
   }
 };
 
+// Export the thresholds object as the default export
+export default thresholds;

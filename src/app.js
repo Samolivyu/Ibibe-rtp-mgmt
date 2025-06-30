@@ -1,10 +1,11 @@
-// src/app.js
-require('dotenv').config();
-const { runValidation } = require('./core/rtp-orch');
-const { generateReport } = require('./reports/custom-report');
-const { log } = require('./utils/logger');
-const { verifyDomain } = require('./utils/dns-verify');
-const config = require('../config/domains');
+import 'dotenv/config';
+import { runValidation } from './core/rtp-orch.js';
+import CustomReporter from './reports/custom-report.js';
+import { verifyDomain } from './utils/dns-verify.js';
+import config from '../config/domains.js';
+
+// Import the new logger
+import { log } from './utils/logger.js';
 
 async function main() {
   try {
@@ -21,7 +22,7 @@ async function main() {
     const validationResults = await runValidation();
     
     // Generate consolidated report
-    await generateReport(validationResults);
+    await CustomReporter(validationResults);
     
     log('Validation completed successfully', 'success');
   } catch (error) {
@@ -30,9 +31,4 @@ async function main() {
   }
 }
 
-// Handle different execution modes
-if (require.main === module) {
-  main();
-} else {
-  module.exports = { main };
-}
+main();

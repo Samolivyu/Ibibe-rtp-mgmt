@@ -1,20 +1,15 @@
-const axios = require('axios');
-const { log, logError } = require('./logger');
+import axios from 'axios';
+import { log, logError } from './logger.js';
 
 // Try different import patterns for axios-rate-limit
 let rateLimit;
 try {
-  // Try default export first
-  rateLimit = require('axios-rate-limit');
-  
-  // If it's an object with default property, use that
+  rateLimit = await import('axios-rate-limit');
   if (rateLimit && typeof rateLimit.default === 'function') {
     rateLimit = rateLimit.default;
   }
-  
-  // If it's still not a function, try the named export
   if (typeof rateLimit !== 'function') {
-    const rateLimitModule = require('axios-rate-limit');
+    const rateLimitModule = await import('axios-rate-limit');
     rateLimit = rateLimitModule.rateLimit || rateLimitModule;
   }
 } catch (error) {
@@ -22,21 +17,19 @@ try {
   rateLimit = null;
 }
 
-const config = require('../../config/domains');
+import config from '../../config/domains.js';
 
 // Create rate-limited clients for each company
 const clients = {};
 Object.keys(config).forEach(company => {
   try {
     if (rateLimit && typeof rateLimit === 'function') {
-      // Create rate-limited client
       clients[company] = rateLimit(axios.create(), {
         maxRequests: config[company].rateLimit.requestsPerSecond,
         perMilliseconds: 1000
       });
       log(`Created rate-limited client for ${company} (${config[company].rateLimit.requestsPerSecond} req/sec)`, 'debug');
     } else {
-      // Fallback to regular axios client
       clients[company] = axios.create();
       log(`Created regular axios client for ${company} (rate limiting disabled)`, 'warn');
     }
@@ -46,8 +39,7 @@ Object.keys(config).forEach(company => {
   }
 });
 
-module.exports = {
- async getGames(company) {
+export async function getGames(company) {
   const { baseUrl, gameListEndpoint, headers, validation } = config[company];
   const client = clients[company];
   
@@ -85,7 +77,6 @@ module.exports = {
     return games;
     
   } catch (error) {
-    
     // Enhanced error logging with full response details
     if (error.response) {
       console.error('=== API ERROR DETAILS ===');
@@ -114,4 +105,9 @@ module.exports = {
     throw new Error(`Failed to get games for ${company}: ${error.message}`);
   }
 }
-};
+
+export async function executeSpinBatch(spinData) {
+    // Implementation for executing a batch of spins
+    const response = await axios.post('/api/spin-batch', spinData);
+    return response.data;
+}
