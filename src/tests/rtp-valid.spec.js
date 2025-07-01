@@ -1,4 +1,4 @@
-// tests/rtp-validation.spec.js
+// tests/rtp-valid.spec.js
 const { test, expect } = require('@playwright/test');
 const RTPCalculator = require('../src/core/rtp-calc');
 const RTPStatistics = require('../src/core/rtp-stats');

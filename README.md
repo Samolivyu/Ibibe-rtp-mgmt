@@ -35,7 +35,7 @@ rtp/
 │   │   └── rtp-stats.js
 │   └── utils/
 ├── tests/
-│   ├── rtp-validation.spec.js
+│   ├── rtp-valid.spec.js
 │   └── rtp-performance.spec.js
 ├── scripts/
 │   └── generate-sample-data.js

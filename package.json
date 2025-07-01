@@ -4,7 +4,7 @@
   "description": "RTP calculation and validation system for gaming applications.",
   "main": "index.js",
   "scripts": {
-    "test:rtp": "npx playwright test tests/rtp-validation.spec.js",
+    "test:rtp": "npx playwright test tests/rtp-valid.spec.js",
     "test:rtp-performance": "npx playwright test tests/rtp-performance.spec.js",
     "test": "npm run test:rtp && npm run test:rtp-performance",
     "generate:sample-data": "node scripts/index.js generate-sample-data",
