@@ -1,0 +1,20 @@
+{
+  "endpoints": [
+    {
+      "company": "playtest",
+      "endpoint": "/operator-proxy/get-user-rtp",
+      "method": "POST",
+      "description": "Fetch user RTP data for PLAY TEST platform.",
+      "responseProperty": "rtp",
+      "exampleGameId": "slot-game-001"
+    },
+    {
+      "company": "casinoclient",
+      "endpoint": "/api/v1/player-rtp-config",
+      "method": "GET",
+      "description": "Fetch all RTP configurations for Casino Client platform.",
+      "responseProperty": "rtp",
+      "exampleGameId": "blackjack-001"
+    }
+  ]
+}

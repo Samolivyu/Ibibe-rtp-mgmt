@@ -1,0 +1,39 @@
+{
+  "name": "merge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Combined project for RTP calculation, validation, and API integration for gaming applications.",
+  "main": "index.js",
+
+  "scripts": {
+    "start": "node api/src/app.js",
+    "test": "npm run test:api && npm run test:rtp",
+    "test:api": "playwright test api/tests/",
+    "test:rtp": "playwright test rtp/tests/",
+    "report": "node api/scripts/generate-reports.js",
+    "analyze": "node api/src/core/results.anal.js",
+    "full-audit": "node api/src/app.js"
+  },
+  
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.10.0",
+    "axios-rate-limit": "^1.4.0",
+    "chalk": "^4.1.2",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.0.1",
+    "js-yaml": "^4.1.0",
+    "mathjs": "^14.5.2",
+    "node-fetch": "^2.7.0",
+    "playwright": "^1.53.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.2",
+    "@types/node": "^24.0.3",
+    "concurrently": "^8.2.2"
+  }
+}

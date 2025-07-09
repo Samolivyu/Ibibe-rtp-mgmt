@@ -1,0 +1,168 @@
+openapi: 3.0.0
+info:
+  title: Unified Gaming API Collection
+  description: Merged API collection for gaming platform with RTP endpoints
+  version: "2.0.0"
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://sandbox.ibibe.cloud
+  - url: https://virtserver.swaggerhub.com/self-3ee/trial1/1.0.0
+paths:
+  # Health and Status endpoints
+  /health:
+    get:
+      summary: Health Check
+      description: Basic health check endpoint
+      responses:
+        '200':
+          description: OK
+  /status:
+    get:
+      summary: Status Check
+      description: Detailed status check endpoint with version and uptime
+      responses:
+        '200':
+          description: OK
+  
+  # Operator Proxy endpoints (from api.yaml)
+  /operator-proxy/session:
+    post:
+      summary: Create Session
+      description: Create a new session for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accessKey:
+                  type: string
+                username:
+                  type: string
+                userId:
+                  type: string
+                currency:
+                  type: string
+                sign:
+                  type: string
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/get-game-url:
+    post:
+      summary: Get Game URL
+      description: Get a game URL for a specific game and user
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/get-game-records:
+    post:
+      summary: Get Game Records
+      description: Get game records for a specific user
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/get-client-games:
+    post:
+      summary: Get Client Games
+      description: Get all games assigned to a client
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/set-user-rtp:
+    post:
+      summary: Set User RTP
+      description: Set the RTP level for a specific user
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/set-user-rtp-batch:
+    post:
+      summary: Set User RTP Batch
+      description: Set the RTP level for multiple users at once
+      responses:
+        '200':
+          description: OK
+  
+  /operator-proxy/get-user-rtp:
+    post:
+      summary: Get User RTP (PlayTest)
+      description: Get the current RTP level for a user on PlayTest platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+              required:
+                - userId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rtp:
+                    type: string
+                    example: "0.95"
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+  
+  # Casino Client API endpoints (from api.yaml)
+  /api/v1/player-rtp-config:
+    get:
+      summary: Get Player RTP Configurations (Casino Client)
+      description: Fetch all RTP settings by game and player for Casino Client platform
+      responses:
+        '200':
+          description: List of RTP configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    rtp:
+                      type: string
+                      example: "0.50"
+                    total_bets:
+                      type: number
+                    total_wins:
+                      type: number
+                    comment:
+                      type: string
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_on:
+                      type: string
+                      format: date-time
+                    game_details:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        game_title:
+                          type: string
+                        approved:
+                          type: integer
+                        game_description:
+                          type: string
+                          nullable: true
