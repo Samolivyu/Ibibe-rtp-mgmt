@@ -1,7 +1,7 @@
 // rtp/src/scripts/data.js
 import dotenv from 'dotenv';
 dotenv.config();
-
+import config from '../../api/src/config/domains.js';
 import { log, logError } from '../utils/logger.js';
 import { executeSpinBatch } from '../../api/src/utils/api-client.js';
 
@@ -27,7 +27,7 @@ class APIDataSource {
           company: this.company,
           gameId: this.gameId,
           spins: spinsToFetch,
-          clientId: `${this.company}-client-api`,
+          clientId: config[this.company]?.username || `${this.company}-client`,
           betAmount: 1
         });
 

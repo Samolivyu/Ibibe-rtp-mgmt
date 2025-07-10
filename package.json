@@ -5,7 +5,6 @@
   "type": "module",
   "description": "Combined project for RTP calculation, validation, and API integration for gaming applications.",
   "main": "index.js",
-
   "scripts": {
     "start": "node api/src/app.js",
     "test": "npm run test:api && npm run test:rtp",
@@ -15,7 +14,6 @@
     "analyze": "node api/src/core/results.anal.js",
     "full-audit": "node api/src/app.js"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -24,7 +22,7 @@
     "axios-rate-limit": "^1.4.0",
     "chalk": "^4.1.2",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.0.1",
+    "dotenv": "^17.2.0",
     "js-yaml": "^4.1.0",
     "mathjs": "^14.5.2",
     "node-fetch": "^2.7.0",
