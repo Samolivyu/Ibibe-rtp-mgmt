@@ -1,33 +1,37 @@
-// 📁 api/src/config/test-thresholds.js
-import 'dotenv/config';
+// config/test-thresholds.js
 
 const thresholds = {
   rtp: {
-    spinsPerGame: parseInt(process.env.RTP_TEST_SPINS || '5000', 10),
-    batchSize: parseInt(process.env.RTP_BATCH_SIZE || '500', 10),
-    accuracyThreshold: 0.99,
-    warningThreshold: 0.97,
-    confidenceLevel: 0.95,
-    targetRTP: 96.0,
-    tolerance: 0.5,
-    minSampleSize: 5000,
-    maxSampleSize: 12000
+    spinsPerGame: process.env.RTP_TEST_SPINS ? parseInt(process.env.RTP_TEST_SPINS, 10) : 5000,
+    batchSize: process.env.RTP_BATCH_SIZE ? parseInt(process.env.RTP_BATCH_SIZE, 10) : 500,
+    accuracyThreshold: 0.99, // 99% accuracy means 1% deviation is allowed (e.g., 96.0 target, 95.0-97.0 range)
+    warningThreshold: 0.97,  // For reporting, if RTP falls below this (e.g., 97%)
+    confidenceLevel: 0.95,   // For statistical significance (e.g., 95% confidence interval)
+    targetRTP: 96.0,         // Default overall target RTP if not game-specific
+    tolerance: 0.5,          // Default overall tolerance (e.g., 0.5% deviation from target)
+    minSampleSize: 1000,     // Minimum rounds for initial RTP validation
+    maxSampleSize: 5000,     // Maximum rounds to consider for RTP stability
   },
   execution: {
-    maxConcurrentGames: 3,
-    gameTimeout: 600000, // 10 minutes
-    maxRetries: 2
+    maxConcurrentGames: 3, // Max parallel game tests
+    gameTimeout: 600000,   // Max time for a single game's tests (ms)
+    maxRetries: 2          // Max retries for failed API calls/spins
   },
   swagger: {
     endpoints: {
       playtest: {
-        expectedRtp: '/operator-proxy/get-user-rtp' // ✅ from playapi.yaml
+        // Endpoint in Swagger where the expected RTP for PLAY TEST is documented
+        // Based on dev.yaml: /api/v1/games/{gameId}/config which has 'rtp' property
+        expectedRtp: '/api/v1/games/{gameId}/config'
       },
       casinoclient: {
-        expectedRtp: '/api/v1/player-rtp-config' // ✅ confirmed from Swagger UI
+        // Endpoint in Swagger where the expected RTP for CASINO CLIENT is documented
+        // Based on test.yaml: /api/v2/games/{gameId}/settings which has 'returnToPlayer' property
+        expectedRtp: '/api/v2/games/{gameId}/settings'
       }
     }
   }
 };
 
+// Export the thresholds object as the default export
 export default thresholds;

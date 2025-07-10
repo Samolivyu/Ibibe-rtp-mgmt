@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Combined project for RTP calculation, validation, and API integration for gaming applications.",
-  "main": "index.js",
+  "main": "api/src/app.js",
   "scripts": {
     "start": "node api/src/app.js",
-    "test": "npm run test:api && npm run test:rtp",
-    "test:api": "playwright test api/tests/",
-    "test:rtp": "playwright test rtp/tests/",
-    "report": "node api/scripts/generate-reports.js",
-    "analyze": "node api/src/core/results.anal.js",
-    "full-audit": "node api/src/app.js"
+    "test": "npm run test:rtp",
+    "test:rtp": "npx playwright test tests/rtp-test.spec.js",
+    "test:rtp:headed": "npx playwright test tests/rtp-test.spec.js --headed",
+    "test:rtp:debug": "npx playwright test tests/rtp-test.spec.js --debug",
+    "report:rtp": "npx playwright show-report reports/html",
+    "generate:sample-data": "node rtp/scripts/index.js generate-sample-data",
+    "postinstall": "mkdir -p data reports/html reports/json reports/junit"
   },
   "keywords": [],
   "author": "",
